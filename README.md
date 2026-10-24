@@ -6,7 +6,7 @@ Sabbath School memory verse practice for Year 4 at Tweed Valley Adventist Colleg
 
 Memory verses 1–13 (NKJV).
 
-Live page: https://justinfraser-create.github.io/memoryverses/quarter-4-primary/
+Live page: https://justinfraser-create.github.io/memoryverses/primary/
 
 ## Quarter 4 (Junior/Teen Year A)
 
