@@ -12,4 +12,4 @@ Live page: https://justinfraser-create.github.io/memoryverses/quarter-4-primary/
 
 Lessons 40–52 (NKJV), opening on flash cards with a Learn this verse option.
 
-Live page: https://justinfraser-create.github.io/memoryverses/quarter-4-junior/
+Live page: https://justinfraser-create.github.io/memoryverses/junior/
