@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sabbath School Practice</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,7..72,500;0,7..72,600;1,7..72,400&display=swap">
+<style>
+/* Layout: a teacher's clipboard — the week's verse up top, one row per student with two tally counters. */
+:root{
+  --bg:#F5F7F9; --surface:#FFFFFF; --ink:#18212B; --muted:#5B6773; --line:#DDE3E9; --soft:#EEF2F5;
+  --ok:#1F7A4D; --ok-soft:#E3F3EA; --try:#8A5A12; --try-soft:#FBF0DC;
+  --v:#2A7F8A; --vd:#0E4752;
+  --f-display:"Literata", Georgia, "Times New Roman", serif;
+  --f-ui:"Figtree", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161B; --surface:#1A2128; --ink:#E8EDF2; --muted:#9AA6B2; --line:#2C3640; --soft:#222B33;
+  --ok:#5CC48E; --ok-soft:#173327; --try:#E2B061; --try-soft:#362A15; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161B; --surface:#1A2128; --ink:#E8EDF2; --muted:#9AA6B2; --line:#2C3640; --soft:#222B33;
+  --ok:#5CC48E; --ok-soft:#173327; --try:#E2B061; --try-soft:#362A15; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--v) 60%,transparent);outline-offset:2px}
+
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;gap:2px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--f-display);font-weight:600;font-size:26px;margin:0;text-wrap:balance}
+.views{display:flex;background:var(--soft);border-radius:999px;padding:3px;gap:2px}
+.views button{border:0;background:transparent;padding:7px 14px;border-radius:999px;font-weight:600;color:var(--muted)}
+.views button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+.weeks{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.wk{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 12px;text-align:left;display:flex;flex-direction:column;gap:0;min-width:110px}
+.wk small{font-size:11px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+.wk span{font-weight:600;font-size:14px;white-space:nowrap}
+.wk[aria-pressed="true"]{border-color:var(--wv);background:var(--wv);color:#fff}
+.wk[aria-pressed="true"] small{color:rgba(255,255,255,.8)}
+.wk .now{display:inline-block;margin-left:4px;font-size:10px;padding:0 5px;border-radius:4px;background:var(--try-soft);color:var(--try);text-transform:uppercase;letter-spacing:.05em;font-style:normal}
+.wk[aria-pressed="true"] .now{background:rgba(255,255,255,.22);color:#fff}
+
+.verse{background:var(--vd);color:#fff;border-radius:16px;padding:22px 24px;display:grid;grid-template-columns:1fr auto;gap:14px 24px;align-items:end}
+.verse .val{grid-column:1/-1;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:rgba(255,255,255,.75)}
+.verse blockquote{margin:0;font-family:var(--f-display);font-size:clamp(18px,2.4vw,23px);line-height:1.4;font-weight:500;max-width:60ch;min-width:0}
+.verse cite{font-style:normal;font-weight:600;font-size:14px;color:rgba(255,255,255,.85);white-space:nowrap}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;flex:1 1 150px;min-width:0}
+.stat b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+
+.list{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.lhead,.row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) 56px;gap:12px;align-items:center;padding:10px 16px}
+.lhead{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--soft)}
+.row{border-top:1px solid var(--line)}
+.row.done .name::after{content:"✓";margin-left:8px;color:var(--ok);font-weight:700}
+.name{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.ctr{display:flex;align-items:center;gap:8px}
+.ctr .n{min-width:2ch;text-align:center;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.minus{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:18px;line-height:1}
+.minus:disabled{opacity:.35;cursor:default}
+.plus{border:0;border-radius:10px;padding:9px 12px;font-weight:700;min-height:42px;flex:1 1 auto;max-width:150px}
+.plus.try{background:var(--try-soft);color:var(--try)}
+.plus.ok{background:var(--ok-soft);color:var(--ok)}
+.plus:active{transform:scale(.97)}
+.rate{font-size:13px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.lab{display:none;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;width:100%}
+.bump{animation:bump .35s ease}
+@keyframes bump{40%{transform:scale(1.35)}}
+@media (prefers-reduced-motion:reduce){.bump{animation:none}.plus:active{transform:none}}
+
+@media (max-width:640px){
+  .lhead{display:none}
+  .row{grid-template-columns:1fr 1fr;gap:8px 12px;padding:14px 16px}
+  .name{grid-column:1/-1;display:flex;justify-content:space-between}
+  .rate{display:none}
+  .ctr{flex-wrap:wrap}
+  .lab{display:block}
+  .plus{max-width:none}
+  .verse{grid-template-columns:1fr}
+}
+
+.foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 14px;font-weight:600}
+.btn.danger{color:#B4382F;border-color:color-mix(in srgb,#B4382F 40%,var(--line))}
+.btn.primary{background:var(--vd);border-color:var(--vd);color:#fff}
+.note{font-size:13px;color:var(--muted)}
+.sync{font-size:12px;color:var(--muted)}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--try-soft);color:var(--ink);padding:8px 12px;border-radius:10px}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.panel h2{font-family:var(--f-display);font-size:19px;margin:0;font-weight:600}
+.field{display:flex;flex-direction:column;gap:4px;max-width:320px}
+.field label{font-weight:600;font-size:14px}
+.field input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px}
+.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.rs{display:flex;gap:6px}
+.rs input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px}
+.rs button{border:1px solid var(--line);background:transparent;border-radius:8px;width:36px;color:var(--muted)}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:9px 10px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.03em;background:var(--soft)}
+th .dot{display:block;height:4px;border-radius:2px;margin-top:5px}
+td:first-child,th:first-child{text-align:left;position:sticky;left:0;background:var(--surface);font-weight:600}
+th:first-child{background:var(--soft)}
+td .s{font-weight:700;color:var(--ok)}
+td .a{color:var(--muted);font-size:12px}
+td.zero{color:var(--line)}
+tr.tot td{font-weight:700;background:var(--soft)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+
+/* ---------- mode switch, teacher bar, lock ---------- */
+.views button{display:inline-flex;align-items:center;gap:6px}
+.views .sm{display:none}
+@media (max-width:640px){html.learning .views .sm{display:inline}}
+.lk{width:14px;height:14px;fill:currentColor}
+.tbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.lock{max-width:420px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.wk .mastered{margin-left:4px;color:var(--ok);font-weight:700}
+.wk[aria-pressed="true"] .mastered{color:#fff}
+
+/* ---------- learn page ---------- */
+.lcard{background:var(--surface);border:1px solid var(--line);border-top:6px solid var(--vd);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:16px}
+.lhead2{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.lref{font-family:var(--f-display);font-size:20px;font-weight:600}
+.steps{display:flex;gap:4px;flex-wrap:wrap}
+.steps button{border:1px solid var(--line);background:transparent;border-radius:999px;padding:5px 11px;font-size:13px;font-weight:600;color:var(--muted)}
+.steps button.done{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+.steps button[aria-pressed="true"]{background:var(--vd);border-color:var(--vd);color:#fff}
+.ladder{display:flex;gap:6px}
+.ladder button{flex:1;border:0;background:transparent;padding:0;display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:var(--muted);text-align:left;min-width:0}
+.ladder button i{display:block;height:8px;border-radius:4px;background:var(--soft)}
+.ladder button.done i{background:var(--ok)}
+.ladder button[aria-pressed="true"] i{background:var(--vd)}
+.ladder button[aria-pressed="true"]{color:var(--ink)}
+.linstr{margin:0;color:var(--muted);font-size:15px}
+.vtext{font-family:var(--f-display);font-size:clamp(22px,3.4vw,31px);line-height:1.75;font-weight:500;min-height:3.5em;cursor:text;overflow-wrap:break-word}
+.vtext .w{white-space:nowrap;border-radius:6px;transition:background .2s}
+.vtext .w.new{background:color-mix(in srgb,var(--vd) 12%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--vd) 12%,transparent)}
+.vtext .w.got{color:var(--ok)}
+.vtext .w.help{color:var(--try)}
+/* hidden letters keep their real width: the letter is invisible and one dash is drawn under it */
+.vtext .l{--u:color-mix(in srgb,var(--muted) 60%,transparent);color:transparent;background:linear-gradient(var(--u),var(--u)) no-repeat center bottom/calc(100% - 3px) 3px}
+.vtext .w.target{background:color-mix(in srgb,var(--vd) 14%,transparent)}
+.vtext .w.target .l{--u:var(--vd)}
+.vtext .vref{display:block;font-family:var(--f-ui);font-size:.68em;font-weight:700;color:var(--muted);margin-top:.15em}
+.vtext .vref .w.got{color:var(--ok)}
+.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}}
+.ltype{display:flex;gap:8px;flex-wrap:wrap}
+.ltype input{flex:1 1 220px;min-width:0;border:2px solid var(--line);background:var(--bg);border-radius:10px;padding:11px 14px;font-size:18px}
+.ltype input:focus{border-color:var(--vd);outline:none}
+.lmsg{min-height:1.4em;font-weight:600}
+.lmsg.ok{color:var(--ok)} .lmsg.try{color:var(--try)}
+.lfoot{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.lfoot .btn.primary:empty{display:none}
+/* on-page keypad for phones and tablets: sticks to the bottom of the screen under the verse */
+.keypad{position:sticky;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);
+  margin:0 -22px;padding:10px 6px calc(10px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;
+  box-shadow:0 -6px 16px rgba(0,0,0,.06)}
+.krow{display:flex;justify-content:center;gap:5px}
+.krow button{flex:1 1 0;max-width:48px;min-width:0;height:48px;border:0;border-radius:8px;background:var(--soft);color:var(--ink);
+  font-size:20px;font-weight:600;touch-action:manipulation;-webkit-user-select:none;user-select:none;padding:0;-webkit-tap-highlight-color:transparent}
+.krow button:active{background:var(--vd);color:#fff}
+.krow .khelp{flex:1.6 1 0;max-width:80px;font-size:14px;background:var(--try-soft);color:var(--try)}
+html.touch .vtext .w{scroll-margin:90px 0 260px}
+@media (max-width:640px){
+  .lcard{padding:16px 14px;gap:12px}
+  .keypad{margin:0 -14px}
+  .vtext{font-size:22px;line-height:1.7;min-height:0}
+  .linstr{font-size:14px}
+}
+.celebrate{background:var(--ok-soft);color:var(--ink);border-radius:12px;padding:14px 16px}
+.lrow1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.lfr{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.flashbtn{background:#FFD84D;border-color:#E9BC00;color:#2B2200;font-weight:700;box-shadow:0 2px 0 #E9BC00}
+.flashbtn:hover{background:#FFCF26}
+
+/* ---------- flash cards ---------- */
+.flash{display:flex;flex-direction:column;gap:14px}
+.frow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ftitle{font-family:var(--f-display);font-size:20px;font-weight:600}
+/* yellow so students can spot the way into the learning steps */
+.learnbtn{background:#FFD84D;border-color:#E9BC00;color:#2B2200;font-weight:700;box-shadow:0 2px 0 #E9BC00}
+.learnbtn:hover{background:#FFCF26}
+.learnbtn:active{transform:translateY(1px);box-shadow:0 1px 0 #E9BC00}
+.ftitle span{font-family:var(--f-ui);font-size:14px;color:var(--muted);font-weight:600}
+.fc{display:block;width:100%;height:clamp(340px,58vh,640px);padding:0;border:0;background:transparent;perspective:1400px;cursor:pointer;-webkit-tap-highlight-color:transparent;font:inherit;color:inherit}
+.fc-in{position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(.3,.7,.3,1);transform-style:preserve-3d}
+.fc.flipped .fc-in{transform:rotateY(180deg)}
+.fc.noanim .fc-in{transition:none}
+.fc{touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.fc.in-next{animation:fcInNext .28s ease-out}
+.fc.in-prev{animation:fcInPrev .28s ease-out}
+@keyframes fcInNext{from{transform:translateX(60px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fcInPrev{from{transform:translateX(-60px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.fc.in-next,.fc.in-prev{animation:none}}
+.face{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden;border-radius:18px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;padding:26px 24px;text-align:center;overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,.12)}
+.front{background:var(--vd);color:#fff}
+.back{background:var(--surface);color:var(--ink);border:2px solid var(--vd);transform:rotateY(180deg)}
+.fwk{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;opacity:.75}
+.fref{font-family:var(--f-display);font-size:clamp(30px,6vw,44px);font-weight:600;line-height:1.2}
+.fhint{font-size:14px;opacity:.8}
+.fverse{font-family:var(--f-display);font-size:30px;line-height:1.45;font-weight:500;max-width:34ch}
+.fref2{font-weight:700;color:var(--vd);font-size:16px}
+.fnav{display:flex;justify-content:space-between;gap:8px}
+.fnav .btn{flex:1 1 0;padding:11px 10px}
+.fnav .btn:disabled{opacity:.4;cursor:default}
+@media (prefers-reduced-motion:reduce){.fc-in{transition:none}}
+@media (max-width:640px){
+  html.learning .flash{flex:1 1 auto;min-height:0;gap:10px}
+  html.learning .fc{flex:1 1 auto;height:auto;min-height:0}
+  html.learning .ftitle{font-size:18px}
+  html.learning .fnav{padding-bottom:36px}
+  html.learning #f-back{padding:7px 14px;font-size:14px}
+}
+.lmini{display:none}
+.lacts{display:flex;gap:6px;flex:0 0 auto}
+.fmini{border:1px solid #E9BC00;background:#FFD84D;color:#2B2200;border-radius:8px;padding:5px 12px;font-size:13px;font-weight:700;box-shadow:0 2px 0 #E9BC00}
+.fmini:hover{background:#FFCF26}
+.lhead2 .lrow1{flex:1 1 auto}
+
+/* ---------- phone: the whole learn page fits one screen ----------
+   The page becomes a fixed-height column; the verse box takes whatever space is left
+   and the text is sized to fit it (see fitText). */
+@media (max-width:640px){
+  html.learning body{height:100vh;height:100dvh;overflow:hidden;
+    padding-top:max(10px,env(safe-area-inset-top,0px));padding-bottom:max(6px,env(safe-area-inset-bottom,0px))}
+  html.learning .wrap{height:100%;gap:8px}
+  html.learning header.top{flex-wrap:nowrap;gap:8px}
+  html.learning .brand .eyebrow{display:none}
+  html.learning h1{font-size:19px;white-space:nowrap}
+  html.learning .views button{padding:5px 10px;font-size:13px}
+  html.learning #learn-view{flex:1 1 auto;min-height:0;gap:8px}
+  html.learning #lweeks{padding-bottom:0;flex:0 0 auto}
+  html.learning #lweeks .wk{padding:4px 10px;min-width:0;border-radius:8px}
+  html.learning #lweeks .wk small{font-size:10px}
+  html.learning #lweeks .wk span{font-size:13px}
+  html.learning .lcard{flex:1 1 auto;min-height:0;padding:10px 12px 0;gap:8px;border-top-width:5px;overflow:hidden}
+  html.learning .lhead2{flex-direction:column;align-items:stretch;gap:8px}
+  html.learning #l-week{display:none}
+  html.learning .lref{font-size:17px}
+  html.learning .lmini{display:inline-block;flex:0 0 auto;border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600;color:var(--muted)}
+  html.learning #l-restart{display:none}
+  html.learning .steps{flex-wrap:nowrap;gap:4px}
+  html.learning .steps button{flex:1 1 auto;padding:4px 3px;font-size:11.5px;white-space:nowrap}
+  html.learning .ladder{gap:4px}
+  html.learning .ladder button{font-size:11px;gap:3px}
+  html.learning .ladder button i{height:6px}
+  html.learning .linstr{font-size:13.5px;line-height:1.35}
+  html.learning .linstr:empty{display:none}
+  html.learning .vtext{flex:1 1 auto;min-height:0;overflow:hidden;line-height:1.55;cursor:default}
+  html.learning .vtext .l{background-size:calc(100% - 3px) 2.5px}
+  html.learning .lmsg{font-size:13.5px;min-height:1.2em;flex:0 0 auto}
+  html.learning .lcard.typing .linstr{display:none}         /* feedback line takes its place */
+  html.learning .lcard:not(.typing) .lmsg:empty{display:none}
+  html.learning .nkjv{display:none}
+  html.learning .ladder button{font-size:0;gap:0}            /* bars only, no "Part" labels */
+  html.learning .views .lg{display:none}
+  html.learning #lweeks .wk{flex-direction:row;align-items:baseline;gap:6px;padding:5px 10px}
+  html.learning #lweeks .wk .now{display:none}
+  html.learning #lweeks .wk[aria-pressed="false"] small{font-weight:600}
+  html.learning .celebrate{padding:10px 12px}
+  html.learning .keypad{position:static;margin:0 -12px;padding:8px 4px;gap:5px;box-shadow:none;flex:0 0 auto}
+  html.learning .krow button{height:42px;font-size:18px}
+  html.learning .krow{gap:4px}
+  html.learning .lfoot{padding-bottom:36px;flex:0 0 auto}   /* lifts Next clear of the screen edge and Safari toolbar */
+  html.learning .lfoot .btn{padding:9px 16px}
+}
+@media (max-width:640px) and (max-height:600px){
+  html.learning .krow button{height:38px}
+  html.learning .keypad{padding:6px 4px;gap:4px}
+  html.learning .wrap,html.learning #learn-view,html.learning .lcard{gap:6px}
+  html.learning .lfoot{padding-bottom:22px}
+}
+.celebrate b{color:var(--ok)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Sabbath School · Memory verses 1–13 (NKJV)</span>
+      <h1>Memory Verses</h1>
+    </div>
+    <div class="views" role="group" aria-label="Page" hidden>
+      <button id="m-learn" aria-pressed="true"><span class="lg">Learn the verse</span><span class="sm">Learn</span></button>
+      <button id="m-teacher" aria-pressed="false"><svg class="lk" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Teacher</button>
+    </div>
+  </header>
+
+  <!-- ================= STUDENT: learn the verse bit by bit ================= -->
+  <section id="learn-view" style="display:flex;flex-direction:column;gap:14px">
+    <nav class="weeks" id="lweeks" aria-label="Choose a verse"></nav>
+    <div class="lcard" id="lcard">
+      <div class="lhead2">
+        <div class="lrow1">
+          <div>
+            <div class="eyebrow" id="l-week"></div>
+            <div class="lref" id="l-ref"></div>
+          </div>
+          <div class="lacts">
+            <button class="fmini" id="l-flash-s" type="button">Flash cards</button>
+            <button class="lmini" id="l-restart-s" type="button">↺ Restart</button>
+          </div>
+        </div>
+        <div class="steps" id="l-levels" role="group" aria-label="Step"></div>
+      </div>
+      <div class="ladder" id="l-parts" role="group" aria-label="Part of the verse"></div>
+      <p class="linstr" id="l-instr"></p>
+      <div class="vtext" id="l-text" aria-live="polite"></div>
+      <div class="ltype" id="l-typerow">
+        <label for="typer" class="sr">Type the first letter of the next missing word</label>
+        <input id="typer" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" placeholder="Type the first letter…">
+        <button class="btn" id="l-hint">Show me a word</button>
+      </div>
+      <div class="lmsg" id="l-msg"></div>
+      <div class="keypad" id="keypad" hidden aria-label="Letter keys"></div>
+      <div class="lfoot" id="l-foot">
+        <button class="btn" id="l-restart">Start this verse again</button>
+        <div class="lfr">
+          <button class="btn flashbtn" id="l-flash" hidden>Flash cards</button>
+          <button class="btn primary" id="l-next"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flash cards: reference on the front, tap to flip and check the verse -->
+    <div class="flash" id="flash-view" hidden>
+      <div class="frow">
+        <div class="ftitle">Flash cards <span id="f-count"></span></div>
+        <button class="btn learnbtn" id="f-back" type="button">Learn this verse</button>
+      </div>
+      <button class="fc" id="fc" type="button" aria-label="Flash card">
+        <div class="fc-in">
+          <div class="face front" id="fc-front"></div>
+          <div class="face back" id="fc-back"></div>
+        </div>
+      </button>
+      <div class="fnav">
+        <button class="btn" id="f-prev" type="button">← Previous</button>
+        <button class="btn primary" id="f-flip" type="button">Flip</button>
+        <button class="btn" id="f-next" type="button">Next →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TEACHER: password gate ================= -->
+  <section id="lock-view" hidden>
+    <form class="panel lock" id="lock-form">
+      <h2>Teacher area</h2>
+      <p class="note" style="margin:0">Enter the teacher password to record recitations.</p>
+      <div class="field">
+        <label for="pw">Password</label>
+        <input id="pw" type="password" autocomplete="current-password">
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn primary" type="submit">Unlock</button>
+        <span class="note" id="pw-msg" role="alert"></span>
+      </div>
+    </form>
+  </section>
+
+  <div class="tbar" id="teacher-bar" hidden>
+    <div class="views" role="group" aria-label="Teacher view">
+      <button id="v-week" aria-pressed="true">This week</button>
+      <button id="v-term" aria-pressed="false">Quarter overview</button>
+      <button id="v-set" aria-pressed="false">Class &amp; settings</button>
+    </div>
+    <button class="btn" id="lock-btn">Lock</button>
+  </div>
+
+  <nav class="weeks" id="weeks" aria-label="Choose a week" hidden></nav>
+
+  <section id="week-view" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="verse" id="verse"></div>
+    <div class="stats" id="stats"></div>
+    <div class="list" id="list"></div>
+    <div class="foot">
+      <span class="note">An <b>attempt</b> is a try that wasn't word-perfect yet. A <b>success</b> is a correct recitation.</span>
+      <div id="reset-zone"><button class="btn danger" id="reset">Clear this week</button></div>
+    </div>
+  </section>
+
+  <section id="term-view" hidden style="display:flex;flex-direction:column;gap:12px">
+    <div class="legend"><span><b style="color:var(--ok)">Bold</b> = successful recitations</span><span>Small number = attempts</span></div>
+    <div class="tablewrap" id="term"></div>
+    <div class="foot"><span class="note" id="export-note"></span><button class="btn primary" id="export">Download CSV</button></div>
+  </section>
+
+  <section id="set-view" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="panel">
+      <h2>Students</h2>
+      <p class="note" style="margin:0">Type each student's name. Renaming keeps their tallies; removing a student hides their tallies.</p>
+      <div class="roster" id="roster"></div>
+      <div><button class="btn" id="add-student">Add student</button></div>
+    </div>
+    <div class="panel">
+      <h2>Quarter dates</h2>
+      <div class="field">
+        <label for="start">Sabbath of Verse 1 (week 1)</label>
+        <input type="date" id="start">
+      </div>
+      <p class="note" style="margin:0">Each verse starts on the Sunday before its Sabbath, so the class has the whole school week to learn it. The tracker opens on the current verse each time — one verse per week from Verse 1 (John 14:27) to Verse 13 (John 11:25).</p>
+    </div>
+  </section>
+
+  <div class="sync" id="sync" role="status" hidden>Connecting to the cloud…</div>
+</div>
+
+<script>
+/* Sabbath School memory verses 1–13 (NKJV), worded as printed on the Signs memory verse sheet. */
+const VERSES=[
+ {id:"v1",lesson:1,d:"#0E4752",ref:"John 14:27",short:"John 14:27",text:"Peace I leave with you, My peace I give to you; not as the world gives do I give to you. Let not your heart be troubled, neither let it be afraid.",parts:["Peace I leave with you, My peace I give to you;", "not as the world gives do I give to you.", "Let not your heart be troubled,", "neither let it be afraid."]},
+ {id:"v2",lesson:2,d:"#1F3A5F",ref:"1 Peter 5:7",short:"1 Pet 5:7",text:"Casting all your care upon Him, for He cares for you.",parts:["Casting all your care upon Him,", "for He cares for you."]},
+ {id:"v3",lesson:3,d:"#5B2147",ref:"Romans 12:10",short:"Rom 12:10",text:"Be kindly affectionate to one another with brotherly love, in honor giving preference to one another.",parts:["Be kindly affectionate to one another with brotherly love,", "in honor giving preference to one another."]},
+ {id:"v4",lesson:4,d:"#1E4A35",ref:"Isaiah 45:22",short:"Isa 45:22",text:"Look to Me, and be saved, all you ends of the earth! For I am God, and there is no other.",parts:["Look to Me, and be saved, all you ends of the earth!", "For I am God, and there is no other."]},
+ {id:"v5",lesson:5,d:"#5A3A1C",ref:"Psalm 145:8",short:"Ps 145:8",text:"The Lord is gracious and full of compassion, slow to anger and great in mercy.",parts:["The Lord is gracious and full of compassion,", "slow to anger and great in mercy."]},
+ {id:"v6",lesson:6,d:"#6B1F1F",ref:"John 10:10",short:"John 10:10",text:"I have come that they may have life, and that they may have it more abundantly.",parts:["I have come that they may have life,", "and that they may have it more abundantly."]},
+ {id:"v7",lesson:7,d:"#2E2A5E",ref:"Luke 8:50",short:"Luke 8:50",text:"But when Jesus heard it, He answered him, saying, ‘Do not be afraid, only believe.’",parts:["But when Jesus heard it, He answered him, saying,", "‘Do not be afraid, only believe.’"]},
+ {id:"v8",lesson:8,d:"#2F3A45",ref:"John 8:32",short:"John 8:32",text:"And you shall know the truth, and the truth shall make you free.",parts:["And you shall know the truth,", "and the truth shall make you free."]},
+ {id:"v9",lesson:9,d:"#3F4A1A",ref:"Isaiah 54:10",short:"Isa 54:10",text:"For the mountains shall depart and the hills be removed, but My kindness shall not depart from you.",parts:["For the mountains shall depart and the hills be removed,", "but My kindness shall not depart from you."]},
+ {id:"v10",lesson:10,d:"#4A2B5E",ref:"Psalm 146:8",short:"Ps 146:8",text:"The Lord opens the eyes of the blind; the Lord raises those who are bowed down.",parts:["The Lord opens the eyes of the blind;", "the Lord raises those who are bowed down."]},
+ {id:"v11",lesson:11,d:"#14505A",ref:"Matthew 8:13",short:"Matt 8:13",text:"Go your way; and as you have believed, so let it be done for you.",parts:["Go your way;", "and as you have believed, so let it be done for you."]},
+ {id:"v12",lesson:12,d:"#6A2E3A",ref:"Jeremiah 31:13",short:"Jer 31:13",text:"For I will turn their mourning to joy, will comfort them, and make them rejoice rather than sorrow.",parts:["For I will turn their mourning to joy,", "will comfort them,", "and make them rejoice rather than sorrow."]},
+ {id:"v13",lesson:13,d:"#3B4A5E",ref:"John 11:25",short:"John 11:25",text:"I am the resurrection and the life. He who believes in Me, though he may die, he shall live.",parts:["I am the resurrection and the life.", "He who believes in Me, though he may die,", "he shall live."]}
+];
+/* Verse 1 is Sabbath 3 October 2026; each verse shows from the Sunday before, so Verse 5 shows from Sunday 25 October. */
+const DEFAULT_START="2026-10-03";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+let state={
+  roster:Array.from({length:14},(_,i)=>({id:"s"+(i+1),name:"Student "+(i+1)})),
+  settings:{start:DEFAULT_START},
+  weeks:{} // verseId -> {studentId:{a,s}}
+};
+let view="week", current=null, confirmReset=false;
+
+/* ---------- dates ---------- */
+function weekIndexToday(){
+  const s=new Date(state.settings.start+"T00:00:00"); if(isNaN(s)) return 0;
+  const t=new Date(); t.setHours(0,0,0,0);
+  /* Each verse starts on the SUNDAY BEFORE its Sabbath (6 days early), so the class has the
+     whole school week to learn it. Round to whole days first so daylight saving doesn't shift it. */
+  const w=Math.floor((Math.round((t-s)/864e5)+6)/7);
+  return Math.max(0,Math.min(VERSES.length-1,w));
+}
+function weekDates(i){
+  const s=new Date(state.settings.start+"T00:00:00"); if(isNaN(s)) return "";
+  const a=new Date(s); a.setDate(a.getDate()+7*i);
+  return a.toLocaleDateString("en-AU",{day:"numeric",month:"short"});
+}
+
+/* ---------- storage ----------
+   The shared cloud database is the record, so tallies follow the class to any signed-in device
+   (laptop, iPad, phone) and appear live on every open copy.
+   - Each tap merges ONE student's tally into the week's document, so two devices tallying
+     different students at the same moment never overwrite each other.
+   - This device also keeps a cache (instant loading) and a list of changes the cloud hasn't
+     confirmed yet; anything entered offline uploads automatically the next time it connects. */
+let db=null, live=false, failed=null, timers={}, writing={};
+let unsynced={roster:false,settings:false,weeks:{},resets:{}};
+const LS="verse-tracker-q4-2026";
+function lsSave(){try{localStorage.setItem(LS,JSON.stringify({state,unsynced}))}catch(e){}}
+function lsLoad(){try{const d=JSON.parse(localStorage.getItem(LS)||"null");if(!d)return;
+  const s=d.state||d; if(s&&s.roster)state=Object.assign(state,s);
+  if(d.unsynced)unsynced=Object.assign({roster:false,settings:false,weeks:{},resets:{}},d.unsynced)}catch(e){}}
+const clone=o=>JSON.parse(JSON.stringify(o));
+function hasUnsynced(){return unsynced.roster||unsynced.settings||Object.keys(unsynced.weeks).length>0||Object.keys(unsynced.resets).length>0}
+function showSync(){
+  let t;
+  if(!db) t="Not connected to the cloud: tallies are kept on this device and will upload the next time this page opens signed in.";
+  else if(failed) t=failed;
+  else if(!live) t="Connecting to the cloud…";
+  else if(hasUnsynced()) t="Saving…";
+  else t="✓ Saved to the cloud · syncs across all your devices";
+  $("sync").textContent=t;
+}
+
+function schedule(key){
+  lsSave(); showSync();
+  if(!db||!live) return;            // queued; flushAll() sends it once connected
+  clearTimeout(timers[key]); timers[key]=setTimeout(()=>flush(key),500);
+}
+function save(key){unsynced[key]=true;schedule(key)}           // roster / settings
+function markCell(vid,sid){(unsynced.weeks[vid]||(unsynced.weeks[vid]={}))[sid]=1;schedule(vid)}
+function resetWeek(vid){state.weeks[vid]={};unsynced.resets[vid]=1;delete unsynced.weeks[vid];schedule(vid)}
+function flushAll(){
+  ["roster","settings"].forEach(k=>{if(unsynced[k])flush(k)});
+  new Set([...Object.keys(unsynced.weeks),...Object.keys(unsynced.resets)]).forEach(flush);
+}
+
+async function flush(key){
+  if(writing[key]){clearTimeout(timers[key]);timers[key]=setTimeout(()=>flush(key),300);return}
+  writing[key]=true;
+  let takenCells=null, takenReset=false, takenFlag=false;
+  try{
+    if(key==="roster"||key==="settings"){
+      if(!unsynced[key]) return;
+      unsynced[key]=false; takenFlag=true;
+      await db.doc("class/"+key).set(key==="roster"?{roster:state.roster}:{settings:state.settings});
+    } else {
+      const ref=db.doc("weeks/"+key);
+      takenReset=!!unsynced.resets[key]; delete unsynced.resets[key];
+      takenCells=unsynced.weeks[key]||{}; delete unsynced.weeks[key];
+      const patch={}; Object.keys(takenCells).forEach(sid=>{patch[sid]=clone(get(key,sid))});
+      if(takenReset) await ref.set({counts:patch});              // "Clear this week" replaces the whole week
+      else if(Object.keys(patch).length){
+        try{await ref.update({counts:patch})}                      // merge just the students that changed
+        catch(e){if(e&&e.code==="invalid_argument")await ref.set({counts:patch});else throw e}  // week not created yet
+      }
+    }
+    failed=null; lsSave();
+  }catch(e){
+    // put the change back in the queue so nothing is lost
+    if(takenFlag) unsynced[key]=true;
+    if(takenReset) unsynced.resets[key]=1;
+    if(takenCells&&Object.keys(takenCells).length) unsynced.weeks[key]=Object.assign(takenCells,unsynced.weeks[key]||{});
+    lsSave();
+    if(e&&e.code==="unavailable"){timers[key]=setTimeout(()=>flush(key),1000+Math.random()*1500)}
+    else if(e&&e.code==="invalid_argument") failed="This account can view the tracker but can't change it. Ask the owner for Contributor access.";
+    else failed="Couldn't reach the cloud ("+(e&&e.code||"error")+"). Changes are kept on this device and will upload when you reload.";
+  }finally{
+    writing[key]=false; showSync();
+    if(!failed&&(unsynced.weeks[key]||unsynced.resets[key]||(key in unsynced&&unsynced[key]===true))) schedule(key);
+  }
+}
+
+async function connect(){
+  showSync();return;   // student copy never connects to the cloud
+  db.doc("class/roster").onSnapshot(s=>{
+    if(unsynced.roster) return;
+    if(s.exists&&Array.isArray(s.data().roster)){state.roster=clone(s.data().roster);lsSave();render()}
+    else if(!s.exists && !s.metadata.fromCache) save("roster");
+  },()=>{});
+  db.doc("class/settings").onSnapshot(s=>{
+    if(unsynced.settings) return;
+    if(s.exists&&s.data().settings){const before=state.settings.start;state.settings=Object.assign({},s.data().settings);
+      if(before!==state.settings.start)current=weekIndexToday();lsSave();render()}
+  },()=>{});
+  db.collection("weeks").onSnapshot(q=>{
+    q.docs.forEach(d=>{
+      if(unsynced.resets[d.id]) return;                           // a local clear is still on its way up
+      const merged=clone((d.data()&&d.data().counts)||{});
+      const mine=unsynced.weeks[d.id]||{};
+      Object.keys(mine).forEach(sid=>{merged[sid]=clone(get(d.id,sid))}); // keep this device's unsent taps
+      state.weeks[d.id]=merged;
+    });
+    if(!q.metadata.fromCache&&!live){live=true;flushAll()}        // first definitive read: send anything queued
+    lsSave(); showSync(); render();
+  },e=>{failed="Live sync stopped ("+(e&&e.code)+"). Reload the page to reconnect.";showSync()});
+}
+
+/* ---------- counts ---------- */
+function cell(vid,sid){const w=state.weeks[vid]||(state.weeks[vid]={});return w[sid]||(w[sid]={a:0,s:0})}
+function get(vid,sid){const w=state.weeks[vid];return (w&&w[sid])||{a:0,s:0}}
+function bump(sid,k,d){
+  const v=VERSES[current].id, c=cell(v,sid);
+  c[k]=Math.max(0,c[k]+d);
+  markCell(v,sid); renderWeek(sid,k);
+}
+
+/* ---------- render ---------- */
+function renderWeeks(){
+  const now=weekIndexToday();
+  $("weeks").innerHTML=VERSES.map((v,i)=>`<button class="wk" style="--wv:${v.d}" aria-pressed="${i===current}" data-i="${i}">
+    <small>Week ${i+1}${weekDates(i)?" · "+weekDates(i):""}${i===now?'<em class="now">Now</em>':""}</small><span>${esc(v.ref)}</span></button>`).join("");
+  const on=$("weeks").querySelector('[aria-pressed="true"]');
+  if(on) on.scrollIntoView({block:"nearest",inline:"nearest"});
+}
+function renderWeek(flashId,flashKey){
+  const v=VERSES[current];
+  document.documentElement.style.setProperty("--vd",v.d);
+  $("verse").innerHTML=`<div class="val">Week ${current+1}</div><blockquote>“${esc(v.text)}”</blockquote><cite>${esc(v.ref)} (NKJV)</cite>`;
+  let A=0,S=0,said=0;
+  state.roster.forEach(st=>{const c=get(v.id,st.id);A+=c.a;S+=c.s;if(c.s>0)said++});
+  const n=state.roster.length;
+  $("stats").innerHTML=`
+    <div class="stat"><b>${said} / ${n}</b><span>students have said it correctly</span></div>
+    <div class="stat"><b>${S}</b><span>successful recitations</span></div>
+    <div class="stat"><b>${A}</b><span>attempts</span></div>
+    <div class="stat"><b>${A+S?Math.round(100*S/(A+S))+"%":"–"}</b><span>success rate</span></div>`;
+  $("list").innerHTML=`<div class="lhead"><span>Student</span><span>Attempts</span><span>Successes</span><span style="text-align:right">Rate</span></div>`+
+    state.roster.map(st=>{const c=get(v.id,st.id);const t=c.a+c.s;
+      return `<div class="row${c.s>0?" done":""}" data-sid="${st.id}">
+        <div class="name">${esc(st.name||"Unnamed")}</div>
+        <div class="ctr"><span class="lab">Attempts</span>
+          <button class="minus" data-k="a" data-d="-1" aria-label="Remove an attempt for ${esc(st.name)}" ${c.a?"":"disabled"}>−</button>
+          <span class="n${flashId===st.id&&flashKey==="a"?" bump":""}">${c.a}</span>
+          <button class="plus try" data-k="a" data-d="1">+ Attempt</button></div>
+        <div class="ctr"><span class="lab">Successes</span>
+          <button class="minus" data-k="s" data-d="-1" aria-label="Remove a success for ${esc(st.name)}" ${c.s?"":"disabled"}>−</button>
+          <span class="n${flashId===st.id&&flashKey==="s"?" bump":""}">${c.s}</span>
+          <button class="plus ok" data-k="s" data-d="1">+ Said it</button></div>
+        <div class="rate">${t?Math.round(100*c.s/t)+"%":"–"}</div></div>`}).join("");
+  $("reset-zone").innerHTML=confirmReset
+    ?`<div class="confirm">Clear every tally for ${esc(v.ref)}? <button class="btn danger" id="reset-yes">Clear</button><button class="btn" id="reset-no">Keep</button></div>`
+    :`<button class="btn danger" id="reset">Clear this week</button>`;
+}
+function renderTerm(){
+  const rows=state.roster.map(st=>{let ts=0,ta=0;
+    const tds=VERSES.map(v=>{const c=get(v.id,st.id);ts+=c.s;ta+=c.a;
+      return c.s||c.a?`<td><span class="s">${c.s}</span> <span class="a">/ ${c.a}</span></td>`:`<td class="zero">·</td>`}).join("");
+    return `<tr><td>${esc(st.name||"Unnamed")}</td>${tds}<td><span class="s">${ts}</span> <span class="a">/ ${ta}</span></td></tr>`}).join("");
+  const tot=VERSES.map(v=>{let s=0,a=0;state.roster.forEach(st=>{const c=get(v.id,st.id);s+=c.s;a+=c.a});return `<td><span class="s">${s}</span> <span class="a">/ ${a}</span></td>`}).join("");
+  $("term").innerHTML=`<table><thead><tr><th>Student</th>${VERSES.map((v,i)=>`<th>Wk ${i+1}<br>${esc(v.short)}<span class="dot" style="background:${v.d}"></span></th>`).join("")}<th>Quarter</th></tr></thead>
+    <tbody>${rows}<tr class="tot"><td>Class total</td>${tot}<td></td></tr></tbody></table>`;
+}
+function renderSettings(){
+  if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#roster")) return;
+  $("roster").innerHTML=state.roster.map((st,i)=>`<div class="rs"><input id="name-${st.id}" data-sid="${st.id}" value="${esc(st.name)}" aria-label="Student ${i+1} name"><button data-rm="${st.id}" aria-label="Remove ${esc(st.name)}">✕</button></div>`).join("");
+  if(document.activeElement!==$("start")) $("start").value=state.settings.start;
+}
+/* ================= STUDENT LEARN PAGE =================
+   Each verse is split into short phrases ("parts"). Students build up one part at a time:
+   part 1, then parts 1–2, then 1–3 … until the whole verse plus its reference.
+   Every part has four steps: Read it → Some words hidden → Most hidden → All hidden.
+   To fill a gap, students type the FIRST LETTER of the missing word (as in Verse by Heart);
+   the gap keeps one underline per letter so they can see how long the word is. */
+const LEVELS=[{name:"Read",f:0},{name:"Some hidden",f:.34},{name:"Most hidden",f:.67},{name:"All hidden",f:1}];
+const PREP={};  // verse id -> {tokens, parts:[endIndex], refStart}
+function splitWord(raw){const m=raw.match(/^([^A-Za-z0-9]*)(.*?)([^A-Za-z0-9]*)$/);return {pre:m[1],core:m[2]||raw,post:m[3]}}
+function seeded(str){let h=2166136261;for(const c of str)h=Math.imul(h^c.charCodeAt(0),16777619);
+  return ()=>{h=Math.imul(h^(h>>>15),2246822507);h=Math.imul(h^(h>>>13),3266489909);h^=h>>>16;return (h>>>0)/4294967296}}
+function prep(v){
+  if(PREP[v.id]) return PREP[v.id];
+  // Hand-set phrase breaks where provided; otherwise split automatically.
+  if(v.parts){
+    const tokens=[],parts=[];
+    v.parts.forEach((ph,ci)=>{ph.split(/\s+/).filter(Boolean).forEach(w=>tokens.push(Object.assign(splitWord(w),{part:ci,ref:false})));parts.push(tokens.length)});
+    const refStart=tokens.length;
+    v.ref.split(/\s+/).forEach(w=>tokens.push(Object.assign(splitWord(w),{part:v.parts.length-1,ref:true})));
+    const rnd=seeded(v.id);tokens.forEach(t=>{t.rank=rnd();t.key=(t.core.match(/[A-Za-z0-9]/)||[""])[0].toLowerCase()});
+    return PREP[v.id]={tokens,parts,refStart};
+  }
+  const words=v.text.split(/\s+/).filter(Boolean);
+  // 1. break after phrase punctuation
+  let chunks=[],cur=[];
+  words.forEach(w=>{cur.push(w);if(/[,;:.!?]['’”]*$/.test(w)){chunks.push(cur);cur=[]}});
+  if(cur.length)chunks.push(cur);
+  // 2. halve any long phrase (>11 words) so each part is a manageable bite
+  chunks=chunks.flatMap(c=>{if(c.length<=11)return [c];const h=Math.ceil(c.length/2);return [c.slice(0,h),c.slice(h)]});
+  // 3. join very short phrases (<4 words) to a neighbour
+  for(let i=0;i<chunks.length;i++){if(chunks.length>1&&chunks[i].length<4){
+    if(i>0){chunks[i-1]=chunks[i-1].concat(chunks[i]);chunks.splice(i,1);i--}
+    else{chunks[1]=chunks[0].concat(chunks[1]);chunks.splice(0,1);i--}}}
+  const tokens=[],parts=[];
+  chunks.forEach((c,ci)=>{c.forEach(w=>tokens.push(Object.assign(splitWord(w),{part:ci,ref:false})));parts.push(tokens.length)});
+  const refStart=tokens.length;
+  v.ref.split(/\s+/).forEach(w=>tokens.push(Object.assign(splitWord(w),{part:chunks.length-1,ref:true})));
+  const rnd=seeded(v.id);tokens.forEach(t=>{t.rank=rnd();t.key=(t.core.match(/[A-Za-z0-9]/)||[""])[0].toLowerCase()});
+  return PREP[v.id]={tokens,parts,refStart};
+}
+let lv=null;          // index of the verse being learnt
+let L=null;           // learning state for the current part/step
+function mastered(){try{return JSON.parse(localStorage.getItem("vt-mastered")||"{}")}catch(e){return {}}}
+function setMastered(id){const m=mastered();m[id]=1;try{localStorage.setItem("vt-mastered",JSON.stringify(m))}catch(e){}}
+function startStep(part,level){
+  const P=prep(VERSES[lv]);
+  const last=part===P.parts.length-1;
+  const end=P.parts[part];
+  const range=[];for(let i=0;i<end;i++)range.push(i);
+  if(last)for(let i=P.refStart;i<P.tokens.length;i++)range.push(i);   // learn the reference with the final part
+  const n=Math.ceil(LEVELS[level].f*range.length);
+  const hidden=range.slice().sort((a,b)=>P.tokens[a].rank-P.tokens[b].rank).slice(0,n).sort((a,b)=>a-b);
+  L={part,level,range,hidden,pos:0,state:{},wrong:{},firstTry:0,complete:level===0,finished:false};
+}
+function nextStep(){
+  const P=prep(VERSES[lv]);
+  if(L.level<LEVELS.length-1) startStep(L.part,L.level+1);
+  else if(L.part<P.parts.length-1) startStep(L.part+1,0);
+  else{L.finished=true;setMastered(VERSES[lv].id)}
+  renderLearn(true);
+}
+function chooseVerse(i){lv=i;startStep(0,0);renderLearn()}
+
+/* ---------- flash cards ----------
+   The deck is every week's verse up to this week, in week order, starting on the chosen verse.
+   Front = reference, back = full verse. Previous/Next wrap around the deck. */
+let F=null;   // {deck:[verse index], pos, flipped}
+function makeDeck(){
+  const now=Math.max(weekIndexToday(),lv);
+  const deck=VERSES.map((v,i)=>i).filter(i=>i<=now);
+  F={deck,pos:Math.max(0,deck.indexOf(lv)),flipped:false};
+}
+function openFlash(){
+  makeDeck(); renderLearn();
+  $("fc").focus({preventScroll:true});
+}
+function closeFlash(){F=null;renderLearn()}
+function flip(){if(!F)return;F.flipped=!F.flipped;renderFlash()}
+function moveFlash(d){
+  if(!F||F.deck.length<2)return;
+  F.pos=(F.pos+d+F.deck.length)%F.deck.length;
+  lv=F.deck[F.pos]; startStep(0,0); renderLearnWeeks();          // keep the week chips in step with the card
+  const fc=$("fc"); fc.classList.add("noanim"); F.flipped=false; renderFlash();   // new card starts face up, no spin
+  void fc.offsetWidth; fc.classList.remove("noanim");
+  fc.classList.remove("in-next","in-prev"); void fc.offsetWidth;            // slide the new card in from the side it came from
+  fc.classList.add(d>0?"in-next":"in-prev");
+}
+function renderFlash(){
+  const i=F.deck[F.pos], v=VERSES[i];
+  $("flash-view").style.setProperty("--vd",v.d);
+  $("f-count").textContent=F.deck.length>1?`· ${F.pos+1} of ${F.deck.length}`:"";
+  $("fc-front").innerHTML=`<div class="fwk">Week ${i+1}</div><div class="fref">${esc(v.ref)}</div><div class="fhint">Say the verse, then tap the card to check${TOUCH?"<br>Swipe left or right to change cards":""}</div>`;
+  $("fc-back").innerHTML=`<div class="fverse">“${esc(v.text)}”</div><div class="fref2">${esc(v.ref)}</div>`;
+  const fc=$("fc"); fc.classList.toggle("flipped",F.flipped);
+  fc.setAttribute("aria-label",F.flipped?`${v.ref}: ${v.text}. Tap to turn back.`:`${v.ref}. Tap to see the verse.`);
+  $("f-flip").textContent=F.flipped?"Turn back":"Flip";
+  $("f-prev").disabled=$("f-next").disabled=F.deck.length<2;
+  fitFlash();
+}
+/* shrink the verse on the back until it fits the card */
+function fitFlash(){
+  const back=$("fc-back"), el=back.querySelector(".fverse"); if(!el)return;
+  let size=PHONE.matches?26:30; el.style.fontSize=size+"px";
+  while(size>14&&back.scrollHeight>back.clientHeight+1){size--;el.style.fontSize=size+"px"}
+}
+
+function wordHTML(P,i){
+  const t=P.tokens[i];
+  const isHidden=L.hidden.includes(i);
+  const st=L.state[i];
+  const target=!L.complete&&L.hidden[L.pos]===i;
+  const isNew=L.level===0&&L.part>0&&!t.ref&&t.part===L.part;
+  let cls="w"+(target?" target":"")+(st==="got"?" got":"")+(st==="help"?" help":"")+(isNew?" new":"");
+  const core=isHidden&&!st?[...t.core].map(c=>`<span class="l">${esc(c)}</span>`).join(""):esc(t.core);
+  return `<span class="${cls}" data-i="${i}">${esc(t.pre)}${core}${esc(t.post)}</span>`;
+}
+function renderLearnWeeks(){
+  const now=weekIndexToday(), m=mastered();
+  $("lweeks").innerHTML=VERSES.slice(0,now+1).map((v,i)=>`<button class="wk" style="--wv:${v.d}" aria-pressed="${i===lv}" data-i="${i}">
+    <small>Week ${i+1}${i===now?'<em class="now">This week</em>':""}</small><span>${esc(v.ref)}${m[v.id]?'<b class="mastered" title="Learnt on this device">✓</b>':""}</span></button>`).join("");
+  const on=$("lweeks").querySelector('[aria-pressed="true"]');
+  if(on) $("lweeks").scrollLeft=Math.max(0,on.offsetLeft-$("lweeks").offsetLeft-16);
+}
+function renderLearn(focus){
+  if(lv===null){lv=weekIndexToday();startStep(0,0);makeDeck()}   // opens on this week's flash card
+  renderLearnWeeks();
+  const v=VERSES[lv],P=prep(v);
+  $("lcard").style.setProperty("--vd",v.d);
+  $("l-week").textContent=`Week ${lv+1}`;
+  $("l-ref").innerHTML=esc(v.ref)+'<span class="nkjv"> (NKJV)</span>';
+  const nParts=P.parts.length;
+  $("l-parts").innerHTML=P.parts.map((_,p)=>`<button data-p="${p}" class="${p<L.part||L.finished?"done":""}" aria-pressed="${p===L.part&&!L.finished}"><i></i>${nParts>1?`Part ${p+1}`:"Whole verse"}</button>`).join("");
+  $("l-parts").hidden=false;
+  $("l-levels").innerHTML=LEVELS.map((s,k)=>`<button data-k="${k}" class="${k<L.level||L.finished?"done":""}" aria-pressed="${k===L.level&&!L.finished}">${k+1}. ${s.name}</button>`).join("");
+
+  const lastPart=L.part===nParts-1;
+  // verse text for this part (cumulative), with the reference on the final part
+  const body=L.range.filter(i=>!P.tokens[i].ref).map(i=>wordHTML(P,i)).join(" ");
+  const refIdx=L.range.filter(i=>P.tokens[i].ref);
+  const ref=refIdx.length?`<span class="vref">${refIdx.map(i=>wordHTML(P,i)).join(" ")}</span>`:"";
+  $("l-text").innerHTML=L.finished?`“${esc(v.text)}” <span class="vref">${esc(v.ref)}</span>`:body+(lastPart?"":" …")+ref;
+
+  const typing=!L.complete&&!L.finished;
+  // Phones/tablets use the on-page keypad (the system keyboard would push the verse off screen);
+  // computers type into the box or straight onto the page.
+  $("l-typerow").hidden=!typing||TOUCH;
+  renderKeypad(typing&&TOUCH);
+  $("lcard").classList.toggle("typing",typing);
+  let instr;
+  if(L.finished) instr="";
+  else if(L.level===0) instr=L.part===0
+      ?(nParts>1?"Read this part out loud three times. Then press Next to hide some words.":"Read the verse out loud three times. Then press Next to hide some words.")
+      :"The new words are highlighted. Read from the start out loud three times, then press Next.";
+  else if(typing) instr=PHONE.matches?"Tap the first letter of each missing word."
+      :TOUCH?"Say the verse in your head. For each gap, tap the first letter of the missing word."
+      :"Say the verse in your head. For each gap, type the first letter of the missing word.";
+  else instr="";
+  $("l-instr").textContent=instr;
+
+  const msg=$("l-msg"); msg.className="lmsg";
+  const next=$("l-next");
+  if(L.finished){
+    msg.innerHTML=`<div class="celebrate"><b>Well done!</b> You can say the whole of ${esc(v.ref)}. Now say it to your teacher without looking.</div>`;
+    next.textContent="Test me again";
+    $("l-flash").hidden=false;
+  } else if(L.level===0){msg.textContent="";next.textContent="Next: hide some words →"}
+  else if(L.complete){
+    const n=L.hidden.length;
+    msg.className="lmsg ok";
+    msg.textContent=L.firstTry===n?`Perfect! All ${n} words right first time.`:`Done! ${L.firstTry} of ${n} words right first time.`;
+    const P2=L.level<LEVELS.length-1?`Next: ${LEVELS[L.level+1].name.toLowerCase()} →`:(L.part<nParts-1?`Next: add part ${L.part+2} →`:"Finish →");
+    next.textContent=P2;
+  } else {next.textContent="";if(!msg.dataset.keep)msg.textContent=""}
+  delete msg.dataset.keep;
+  if(focus){
+    if(typing&&!TOUCH) $("typer").focus();
+    else if(!typing&&next.textContent) next.focus({preventScroll:TOUCH});
+  }
+  // phone: footer only when there's a Next button; Restart lives up by the reference
+  if(!L.finished) $("l-flash").hidden=true;
+  $("lcard").hidden=!!F; $("flash-view").hidden=!F; if(F) renderFlash();
+  $("l-foot").hidden=PHONE.matches&&!next.textContent;
+  fitText();
+  // larger screens: keep the word being asked for in view, clear of the keypad
+  if(typing&&TOUCH&&!PHONE.matches){const tg=$("l-text").querySelector(".w.target");if(tg)tg.scrollIntoView({block:"nearest"})}
+}
+const PHONE=window.matchMedia?matchMedia("(max-width:640px)"):{matches:false};
+/* On phones, shrink the verse text until it fits the space left on screen (26px down to 13px). */
+function fitText(){
+  const el=$("l-text"); el.style.fontSize="";
+  if(!PHONE.matches||mode!=="learn") return;
+  let size=26; el.style.fontSize=size+"px";
+  while(size>14&&el.scrollHeight>el.clientHeight+2){size--;el.style.fontSize=size+"px"}
+}
+window.addEventListener("resize",()=>{if(mode==="learn")renderLearn()});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitText);
+const TOUCH=window.matchMedia&&matchMedia("(pointer: coarse)").matches;
+document.documentElement.classList.toggle("touch",!!TOUCH);
+const KEYROWS=["qwertyuiop","asdfghjkl","zxcvbnm"];
+let keypadSig="";
+function renderKeypad(show){
+  const kp=$("keypad");
+  kp.hidden=!show; if(!show){keypadSig="";return}
+  // number row only when a hidden word is a number (the reference in the final part)
+  const P=prep(VERSES[lv]);
+  // number row only while the word being asked for is a number (part of the reference)
+  const digits=/[0-9]/.test((P.tokens[L.hidden[L.pos]]||{}).key||"");
+  const sig=String(digits); if(sig===keypadSig) return; keypadSig=sig;
+  const row=(s,extra="")=>`<div class="krow">${[...s].map(c=>`<button type="button" data-ch="${c}" aria-label="${c.toUpperCase()}">${c.toUpperCase()}</button>`).join("")}${extra}</div>`;
+  kp.innerHTML=(digits?row("1234567890"):"")+row(KEYROWS[0])+row(KEYROWS[1])+row(KEYROWS[2],`<button type="button" class="khelp" data-help="1">Help</button>`);
+}
+function revealTarget(how){
+  const i=L.hidden[L.pos];
+  L.state[i]=how;
+  if(how==="got"&&!L.wrong[i]) L.firstTry++;
+  L.pos++;
+  if(L.pos>=L.hidden.length) L.complete=true;
+}
+function typeLetter(ch){
+  if(!L||L.complete||L.finished) return;
+  const P=prep(VERSES[lv]); const i=L.hidden[L.pos]; const t=P.tokens[i];
+  if(!/[a-z0-9]/i.test(ch)) return;
+  if(ch.toLowerCase()===t.key){revealTarget("got");renderLearn(true)}
+  else{
+    L.wrong[i]=(L.wrong[i]||0)+1;
+    if(L.wrong[i]>=3){revealTarget("help");$("l-msg").dataset.keep=1;renderLearn(true);
+      const m=$("l-msg");m.className="lmsg try";m.textContent=`That word was “${t.core}”.`}
+    else{const el=$("l-text").querySelector(`.w[data-i="${i}"]`);if(el){el.classList.remove("shake");void el.offsetWidth;el.classList.add("shake")}
+      const m=$("l-msg");m.className="lmsg try";m.textContent=L.wrong[i]===1?"Not quite — try again.":(TOUCH?"Try once more, or tap Help.":"Try once more, or press “Show me a word”.");fitText()}
+  }
+}
+
+/* ================= TEACHER PASSWORD =================
+   A simple classroom lock so students stay on the Learn page. The password is checked against a
+   SHA-256 hash rather than stored as plain text; it is not high security (the tallies themselves
+   are protected by your claude.ai sign-in and sharing settings). */
+const PW_HASH="1cb6508098e9e5955ef7b22b1f0c43f59fe17e429ac321791073cb04e06e4864";
+let unlocked=false; try{unlocked=sessionStorage.getItem("vt-teacher")==="1"}catch(e){}
+unlocked=false; let mode="learn";   // student-only copy: no teacher area
+async function checkPw(pw){
+  try{const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(pw));
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("")===PW_HASH}
+  catch(e){return btoa(pw)==="aW5zcGlyZQ=="}   // fallback where Web Crypto is unavailable
+}
+
+function render(){
+  if(current===null) current=weekIndexToday();
+  const t=mode==="teacher"&&unlocked;
+  document.documentElement.classList.toggle("learning",mode==="learn");
+  $("m-learn").setAttribute("aria-pressed",mode==="learn");
+  $("m-teacher").setAttribute("aria-pressed",mode==="teacher");
+  $("learn-view").hidden=mode!=="learn";
+  $("lock-view").hidden=!(mode==="teacher"&&!unlocked);
+  $("teacher-bar").hidden=!t; $("sync").hidden=!t;
+  $("weeks").hidden=!t||view==="set";
+  ["week","term","set"].forEach(k=>{$(k+"-view").hidden=!t||view!==k;$("v-"+k).setAttribute("aria-pressed",view===k)});
+  if(t){renderWeeks(); if(view==="week")renderWeek(); if(view==="term")renderTerm(); if(view==="set")renderSettings();}
+  if(mode==="learn") renderLearn();
+}
+
+/* ---------- events ---------- */
+$("weeks").addEventListener("click",e=>{const b=e.target.closest(".wk");if(!b)return;current=+b.dataset.i;confirmReset=false;if(view==="set")view="week";render()});
+["week","term","set"].forEach(k=>$("v-"+k).addEventListener("click",()=>{view=k;confirmReset=false;render()}));
+$("list").addEventListener("click",e=>{const b=e.target.closest("button[data-k]");if(!b)return;bump(b.closest(".row").dataset.sid,b.dataset.k,+b.dataset.d)});
+$("reset-zone").addEventListener("click",e=>{
+  if(e.target.id==="reset"){confirmReset=true;renderWeek()}
+  else if(e.target.id==="reset-no"){confirmReset=false;renderWeek()}
+  else if(e.target.id==="reset-yes"){const v=VERSES[current].id;confirmReset=false;resetWeek(v);renderWeek()}
+});
+let nameTimer;
+$("roster").addEventListener("input",e=>{const sid=e.target.dataset.sid;if(!sid)return;
+  const st=state.roster.find(s=>s.id===sid);if(st)st.name=e.target.value;
+  clearTimeout(nameTimer);nameTimer=setTimeout(()=>save("roster"),700)});
+$("roster").addEventListener("click",e=>{const id=e.target.dataset&&e.target.dataset.rm;if(!id)return;
+  state.roster=state.roster.filter(s=>s.id!==id);save("roster");document.activeElement.blur();renderSettings()});
+$("add-student").addEventListener("click",()=>{
+  const n=state.roster.reduce((m,s)=>Math.max(m,+(s.id.slice(1))||0),0)+1;
+  state.roster.push({id:"s"+n,name:""});save("roster");renderSettings();
+  const el=$("name-s"+n); if(el) el.focus();
+});
+$("start").addEventListener("change",e=>{if(!e.target.value)return;state.settings.start=e.target.value;current=weekIndexToday();save("settings");renderWeeks()});
+
+/* ---------- mode + password events ---------- */
+$("m-learn").addEventListener("click",()=>{mode="learn";render()});
+$("m-teacher").addEventListener("click",()=>{mode="teacher";render();if(!unlocked)$("pw").focus()});
+$("lock-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(await checkPw($("pw").value)){
+    unlocked=true;try{sessionStorage.setItem("vt-teacher","1")}catch(err){}
+    $("pw").value="";$("pw-msg").textContent="";view="week";current=weekIndexToday();render();
+  } else {$("pw-msg").textContent="That password isn't right.";$("pw").select()}
+});
+$("lock-btn").addEventListener("click",()=>{unlocked=false;try{sessionStorage.removeItem("vt-teacher")}catch(e){}mode="learn";render()});
+
+/* ---------- learn events ---------- */
+// choosing a week keeps you in flash cards if that's where you are
+$("lweeks").addEventListener("click",e=>{const b=e.target.closest(".wk");if(!b)return;
+  if(F){lv=+b.dataset.i;startStep(0,0);openFlash()}else chooseVerse(+b.dataset.i)});
+$("l-flash-s").addEventListener("click",openFlash);
+$("l-flash").addEventListener("click",openFlash);
+$("f-back").addEventListener("click",closeFlash);
+/* Swipe on the card: left = next card, right = previous card. A tap still flips it. */
+let swipe=null, swiped=false;
+$("fc").addEventListener("touchstart",e=>{if(e.touches.length!==1)return;const t=e.touches[0];swipe={x:t.clientX,y:t.clientY,t:Date.now()}},{passive:true});
+$("fc").addEventListener("touchend",e=>{
+  if(!swipe)return; const t=e.changedTouches[0];
+  const dx=t.clientX-swipe.x, dy=t.clientY-swipe.y, dt=Date.now()-swipe.t; swipe=null;
+  if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.3&&dt<800){
+    swiped=true; setTimeout(()=>{swiped=false},400);            // stop the tap-to-flip that follows a swipe
+    moveFlash(dx<0?1:-1);
+  }
+},{passive:true});
+$("fc").addEventListener("touchcancel",()=>{swipe=null});
+$("fc").addEventListener("click",e=>{if(swiped){e.preventDefault();return}flip()});
+$("f-flip").addEventListener("click",flip);
+$("f-prev").addEventListener("click",()=>moveFlash(-1));
+$("f-next").addEventListener("click",()=>moveFlash(1));
+document.addEventListener("keydown",e=>{
+  if(!F||mode!=="learn")return;
+  if(e.key==="ArrowRight"){e.preventDefault();moveFlash(1)}
+  else if(e.key==="ArrowLeft"){e.preventDefault();moveFlash(-1)}
+  else if(e.key===" "&&e.target.tagName!=="BUTTON"){e.preventDefault();flip()}
+});
+$("l-parts").addEventListener("click",e=>{const b=e.target.closest("button[data-p]");if(!b)return;startStep(+b.dataset.p,0);renderLearn(true)});
+$("l-levels").addEventListener("click",e=>{const b=e.target.closest("button[data-k]");if(!b)return;startStep(L.part,+b.dataset.k);renderLearn(true)});
+$("l-next").addEventListener("click",()=>{if(L.finished){startStep(prep(VERSES[lv]).parts.length-1,LEVELS.length-1);renderLearn(true)}else nextStep()});
+$("l-restart").addEventListener("click",()=>{startStep(0,0);renderLearn(true)});
+$("l-restart-s").addEventListener("click",()=>{startStep(0,0);renderLearn(true)});
+$("l-hint").addEventListener("click",()=>{if(!L||L.complete)return;revealTarget("help");renderLearn(true)});
+$("l-text").addEventListener("click",()=>{if(!$("l-typerow").hidden)$("typer").focus()});
+$("typer").addEventListener("input",e=>{const v=e.target.value;e.target.value="";if(v)typeLetter(v.slice(-1))});
+$("keypad").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.help){if(!L||L.complete)return;revealTarget("help");renderLearn(true)}
+  else typeLetter(b.dataset.ch);
+});
+document.addEventListener("keydown",e=>{
+  if(mode!=="learn"||!L||F)return;
+  // a physical keyboard works anywhere on the page (e.g. an iPad with a keyboard case)
+  const typing=!L.complete&&!L.finished;
+  if(typing&&e.key.length===1&&/[a-z0-9]/i.test(e.key)&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&e.target.id!=="typer"&&!/INPUT|TEXTAREA/.test(e.target.tagName)){
+    e.preventDefault();typeLetter(e.key);return}
+  if(e.key!=="Enter")return;
+  if(e.target&&e.target.tagName==="BUTTON")return;               // let buttons handle their own Enter
+  if(L.complete||L.finished){e.preventDefault();$("l-next").click()}
+});
+
+/* ---------- CSV ---------- */
+function csv(){
+  const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  const head=["Student",...VERSES.flatMap(v=>[`Wk${v.lesson} ${v.ref} successes`,`Wk${v.lesson} ${v.ref} attempts`]),"Quarter successes","Quarter attempts"];
+  const lines=[head.map(q).join(",")];
+  state.roster.forEach(st=>{let ts=0,ta=0;const cells=VERSES.flatMap(v=>{const c=get(v.id,st.id);ts+=c.s;ta+=c.a;return [c.s,c.a]});
+    lines.push([q(st.name),...cells,ts,ta].join(","))});
+  return lines.join("\r\n");
+}
+let downloads=null;
+$("export").addEventListener("click",async()=>{
+  if(!downloads){$("export-note").textContent="Downloading isn't available in this view.";return}
+  try{await downloads.save({filename:"Sabbath School verse tracker - Quarter 4 2026.csv",data:csv()});$("export-note").textContent="CSV saved."}
+  catch(e){$("export-note").textContent=e&&e.code==="cancelled"?"":"The download didn't go through. Try again."}
+});
+
+/* ---------- boot ---------- */
+lsLoad(); render();
+/* Student practice copy: no cloud connection, so students never need to sign in. */
+</script>
+</body>
+</html>
+
+</body></html>
