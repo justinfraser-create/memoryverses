@@ -349,6 +349,20 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
 .pw{display:inline-flex;flex-direction:column;align-items:center;vertical-align:bottom;margin-top:.15em}
 .pe{font-size:.95em;line-height:1.15;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
 @media (max-width:640px){html.learning .fnav{padding-bottom:8px}html.learning .fopts{padding-bottom:28px}}
+/* ---------- picture help on the learn screen ---------- */
+.lpics{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;
+  padding:4px 10px 4px 5px;font-size:13px;font-weight:700;color:var(--ink);-webkit-tap-highlight-color:transparent;flex:0 0 auto}
+.lpics .sw{width:28px;height:17px;border-radius:999px;background:var(--line);position:relative;transition:background .2s;flex:0 0 auto}
+.lpics .sw::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s}
+.lpics[aria-checked="true"]{border-color:var(--vd)}
+.lpics[aria-checked="true"] .sw{background:var(--vd)}
+.lpics[aria-checked="true"] .sw::after{transform:translateX(11px)}
+@media (prefers-reduced-motion:reduce){.lpics .sw,.lpics .sw::after{transition:none}}
+.vtext.withpics{line-height:1.3}
+.vtext .pw{margin-top:.25em}
+.vtext .pe{font-size:.8em;line-height:1.2}
+.lpics .lpi{display:none;font-size:15px;line-height:1}
+@media (max-width:640px){html.learning .vtext.withpics{line-height:1.2}html.learning .lpics{padding:4px 6px 4px 5px}html.learning .lpics .lpl{display:none}html.learning .lpics .lpi{display:inline}}
 </style>
 </head>
 <body>
@@ -375,6 +389,9 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
             <div class="lref" id="l-ref"></div>
           </div>
           <div class="lacts">
+            <button class="lpics" id="l-pics" type="button" role="switch" aria-checked="false" aria-label="Picture help">
+              <span class="sw" aria-hidden="true"></span><span class="lpl">Pictures</span><span class="lpi" aria-hidden="true">🖼️</span>
+            </button>
             <button class="fmini" id="l-flash-s" type="button">Flash cards</button>
             <button class="lmini" id="l-restart-s" type="button">↺ Restart</button>
           </div>
@@ -544,6 +561,14 @@ function picWords(v){
     const hit=list.find(p=>p[0]===core&&(!p[2]||p[2]===seen[core]));
     return {raw,pic:hit?hit[1]:""};
   });
+}
+/* Picture for each verse word of a prepared verse (token index → picture), for the learn screen */
+const PICTOK={};
+function picTokens(v,P){
+  if(PICTOK[v.id]) return PICTOK[v.id];
+  const ws=picWords(v), out={}; let k=0;
+  P.tokens.forEach((t,i)=>{if(t.ref)return; const w=ws[k++]; if(w&&w.pic)out[i]=w.pic});
+  return PICTOK[v.id]=out;
 }
 function picVerseHTML(v){
   const ws=picWords(v); const last=ws.length-1;
@@ -854,7 +879,9 @@ function wordHTML(P,i){
   const isNew=L.level===0&&L.part>0&&!t.ref&&t.part===L.part;
   let cls="w"+(target?" target":"")+(st==="got"?" got":"")+(st==="help"?" help":"")+(isNew?" new":"");
   const core=isHidden&&!st?[...t.core].map(c=>`<span class="l">${esc(c)}</span>`).join(""):esc(t.core);
-  return `<span class="${cls}" data-i="${i}">${esc(t.pre)}${core}${esc(t.post)}</span>`;
+  const html=`<span class="${cls}" data-i="${i}">${esc(t.pre)}${core}${esc(t.post)}</span>`;
+  const pic=picOn&&!t.ref?picTokens(VERSES[lv],P)[i]:"";
+  return pic?`<span class="pw"><span class="pe" aria-hidden="true">${pic}</span>${html}</span>`:html;
 }
 function renderLearnWeeks(){
   const now=weekIndexToday(), m=mastered();
@@ -880,7 +907,9 @@ function renderLearn(focus){
   const body=L.range.filter(i=>!P.tokens[i].ref).map(i=>wordHTML(P,i)).join(" ");
   const refIdx=L.range.filter(i=>P.tokens[i].ref);
   const ref=refIdx.length?`<span class="vref">${refIdx.map(i=>wordHTML(P,i)).join(" ")}</span>`:"";
-  $("l-text").innerHTML=L.finished?`“${esc(v.text)}” <span class="vref">${esc(v.ref)}</span>`:body+(lastPart?"":" …")+ref;
+  $("l-text").innerHTML=L.finished?`${picOn?picVerseHTML(v):"“"+esc(v.text)+"”"} <span class="vref">${esc(v.ref)}</span>`:body+(lastPart?"":" …")+ref;
+  $("l-text").classList.toggle("withpics",picOn);
+  $("l-pics").setAttribute("aria-checked",picOn);
 
   const typing=!L.complete&&!L.finished;
   // Phones/tablets use the on-page keypad (the system keyboard would push the verse off screen);
@@ -1039,6 +1068,7 @@ $("lock-btn").addEventListener("click",()=>{unlocked=false;try{sessionStorage.re
 $("lweeks").addEventListener("click",e=>{const b=e.target.closest(".wk");if(!b)return;
   if(F){lv=+b.dataset.i;startStep(0,0);openFlash()}else chooseVerse(+b.dataset.i)});
 $("l-flash-s").addEventListener("click",openFlash);
+$("l-pics").addEventListener("click",()=>{picOn=!picOn;try{localStorage.setItem("vt-pictures",picOn?"1":"0")}catch(err){}renderLearn()});
 $("l-flash").addEventListener("click",openFlash);
 $("f-back").addEventListener("click",closeFlash);
 /* Swipe on the card: left = next card, right = previous card. A tap still flips it. */
@@ -1129,7 +1159,7 @@ $("chest").addEventListener("click",e=>{if(e.target.id==="chest")closeChest()});
    iPads keep a saved copy of this page for a while. Each time the app opens or comes back to the
    front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
    Change BUILD whenever the page is updated. */
-const BUILD="2026-10-26-0610";
+const BUILD="2026-10-26-0640";
 async function checkForUpdate(){
   try{
     const r=await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"});
