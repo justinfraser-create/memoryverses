@@ -503,7 +503,7 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
     <div class="panel">
       <h2>Term dates</h2>
       <div class="field">
-        <label for="start">Monday of the Self-Control week (week 1)</label>
+        <label for="start">Monday of the Self-Control week (Term 4 week 2)</label>
         <input type="date" id="start">
       </div>
       <p class="note" style="margin:0">Each verse appears on the Sunday before its school week. The tracker opens on the current value each time, one per week: Self-Control, Respect, Compassion, Integrity, Humility, Responsibility, Excellence, Discernment, Diligence.</p>
@@ -522,20 +522,21 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
 
 <script>
 /* TVAC Value of the Week memory verses, Years 3–6 (NIV), worded as in the values resource pack.
-   One value per school week, in pack order. "lesson" is the week number. */
+   One value per school week, in pack order. "lesson" is the Term 4 week number. */
 const VERSES=[
- {id:"self-control",lesson:1,name:"Self-Control",d:"#0E4752",ref:"Proverbs 25:28",short:"Prov 25:28",text:"Like a city whose walls are broken through is a person who lacks self-control.",parts:["Like a city whose walls are broken through", "is a person who lacks self-control."]},
- {id:"respect",lesson:2,name:"Respect",d:"#1F3A5F",ref:"1 Peter 2:17",short:"1 Pet 2:17",text:"Show proper respect to everyone, love the family of believers, fear God, honour the emperor.",parts:["Show proper respect to everyone,", "love the family of believers,", "fear God, honour the emperor."]},
- {id:"compassion",lesson:3,name:"Compassion",d:"#5B2147",ref:"Colossians 3:12",short:"Col 3:12",text:"Therefore, as God’s chosen people, holy and dearly loved, clothe yourselves with compassion, kindness, humility, gentleness and patience.",parts:["Therefore, as God’s chosen people,", "holy and dearly loved,", "clothe yourselves with compassion, kindness,", "humility, gentleness and patience."]},
- {id:"integrity",lesson:4,name:"Integrity",d:"#1E4A35",ref:"Luke 16:10",short:"Luke 16:10",text:"Whoever can be trusted with very little can also be trusted with much, and whoever is dishonest with very little will also be dishonest with much.",parts:["Whoever can be trusted with very little", "can also be trusted with much,", "and whoever is dishonest with very little", "will also be dishonest with much."]},
- {id:"humility",lesson:5,name:"Humility",d:"#5A3A1C",ref:"Micah 6:8",short:"Mic 6:8",text:"He has shown you, O mortal, what is good. And what does the LORD require of you? To act justly and to love mercy and to walk humbly with your God.",parts:["He has shown you, O mortal, what is good.", "And what does the LORD require of you?", "To act justly and to love mercy", "and to walk humbly with your God."]},
- {id:"responsibility",lesson:6,name:"Responsibility",d:"#6B1F1F",ref:"1 Peter 4:10",short:"1 Pet 4:10",text:"Each of you should use whatever gift you have received to serve others, as faithful stewards of God’s grace in its various forms.",parts:["Each of you should use whatever gift", "you have received to serve others,", "as faithful stewards of God’s grace in its various forms."]},
- {id:"excellence",lesson:7,name:"Excellence",d:"#2E2A5E",ref:"1 Corinthians 10:31",short:"1 Cor 10:31",text:"So whether you eat or drink or whatever you do, do it all for the glory of God.",parts:["So whether you eat or drink or whatever you do,", "do it all for the glory of God."]},
- {id:"discernment",lesson:8,name:"Discernment",d:"#2F3A45",ref:"1 Thessalonians 5:21–22",short:"1 Thess 5:21–22",text:"…test them all; hold on to what is good, reject every kind of evil.",parts:["…test them all;", "hold on to what is good,", "reject every kind of evil."]},
- {id:"diligence",lesson:9,name:"Diligence",d:"#3F4A1A",ref:"Galatians 6:9",short:"Gal 6:9",text:"Let us not become weary in doing good, for at the proper time we will reap a harvest if we do not give up.",parts:["Let us not become weary in doing good,", "for at the proper time we will reap a harvest", "if we do not give up."]}
+ {id:"self-control",lesson:2,name:"Self-Control",d:"#0E4752",ref:"Proverbs 25:28",short:"Prov 25:28",text:"Like a city whose walls are broken through is a person who lacks self-control.",parts:["Like a city whose walls are broken through", "is a person who lacks self-control."]},
+ {id:"respect",lesson:3,name:"Respect",d:"#1F3A5F",ref:"1 Peter 2:17",short:"1 Pet 2:17",text:"Show proper respect to everyone, love the family of believers, fear God, honour the emperor.",parts:["Show proper respect to everyone,", "love the family of believers,", "fear God, honour the emperor."]},
+ {id:"compassion",lesson:4,name:"Compassion",d:"#5B2147",ref:"Colossians 3:12",short:"Col 3:12",text:"Therefore, as God’s chosen people, holy and dearly loved, clothe yourselves with compassion, kindness, humility, gentleness and patience.",parts:["Therefore, as God’s chosen people,", "holy and dearly loved,", "clothe yourselves with compassion, kindness,", "humility, gentleness and patience."]},
+ {id:"integrity",lesson:5,name:"Integrity",d:"#1E4A35",ref:"Luke 16:10",short:"Luke 16:10",text:"Whoever can be trusted with very little can also be trusted with much, and whoever is dishonest with very little will also be dishonest with much.",parts:["Whoever can be trusted with very little", "can also be trusted with much,", "and whoever is dishonest with very little", "will also be dishonest with much."]},
+ {id:"humility",lesson:6,name:"Humility",d:"#5A3A1C",ref:"Micah 6:8",short:"Mic 6:8",text:"He has shown you, O mortal, what is good. And what does the LORD require of you? To act justly and to love mercy and to walk humbly with your God.",parts:["He has shown you, O mortal, what is good.", "And what does the LORD require of you?", "To act justly and to love mercy", "and to walk humbly with your God."]},
+ {id:"responsibility",lesson:7,name:"Responsibility",d:"#6B1F1F",ref:"1 Peter 4:10",short:"1 Pet 4:10",text:"Each of you should use whatever gift you have received to serve others, as faithful stewards of God’s grace in its various forms.",parts:["Each of you should use whatever gift", "you have received to serve others,", "as faithful stewards of God’s grace in its various forms."]},
+ {id:"excellence",lesson:8,name:"Excellence",d:"#2E2A5E",ref:"1 Corinthians 10:31",short:"1 Cor 10:31",text:"So whether you eat or drink or whatever you do, do it all for the glory of God.",parts:["So whether you eat or drink or whatever you do,", "do it all for the glory of God."]},
+ {id:"discernment",lesson:9,name:"Discernment",d:"#2F3A45",ref:"1 Thessalonians 5:21–22",short:"1 Thess 5:21–22",text:"…test them all; hold on to what is good, reject every kind of evil.",parts:["…test them all;", "hold on to what is good,", "reject every kind of evil."]},
+ {id:"diligence",lesson:10,name:"Diligence",d:"#3F4A1A",ref:"Galatians 6:9",short:"Gal 6:9",text:"Let us not become weary in doing good, for at the proper time we will reap a harvest if we do not give up.",parts:["Let us not become weary in doing good,", "for at the proper time we will reap a harvest", "if we do not give up."]}
 ];
-/* Week 1 (Self-Control) is the week of Monday 12 October 2026. Each verse appears from the Sunday
-   before its school week, so Compassion shows from Sunday 25 October. */
+/* Self-Control is Term 4 week 2 (Monday 19 October 2026), so Respect is week 3 (Monday 26 October).
+   Each verse appears from the Sunday before its school week.
+   fixStart moves the earlier start date (12 October) saved on devices or in the Sheet to the new one. */
 /* Picture help: a small picture above the key words of each verse (word, picture, and optionally
    which occurrence to mark — otherwise every occurrence gets the picture). */
 const PICS={
@@ -575,7 +576,9 @@ function picVerseHTML(v){
     return w.pic?`<span class="pw"><span class="pe" aria-hidden="true">${w.pic}</span>${t}</span>`:t;
   }).join(" ");
 }
-const DEFAULT_START="2026-10-12";
+const DEFAULT_START="2026-10-19";
+const TEACHER_COPY=false;
+const fixStart=d=>d==="2026-10-12"?DEFAULT_START:d;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -614,6 +617,7 @@ const LS="verse-tracker-tvac-t4-2026";
 function lsSave(){try{localStorage.setItem(LS,JSON.stringify({state,unsynced}))}catch(e){}}
 function lsLoad(){try{const d=JSON.parse(localStorage.getItem(LS)||"null");if(!d)return;
   const s=d.state||d; if(s&&s.roster)state=Object.assign(state,s);
+  if(state.settings&&fixStart(state.settings.start)!==state.settings.start){state.settings.start=DEFAULT_START;if(TEACHER_COPY)unsynced.settings=true}
   if(d.unsynced)unsynced=Object.assign({roster:false,settings:false,weeks:{},resets:{}},d.unsynced)}catch(e){}}
 const clone=o=>JSON.parse(JSON.stringify(o));
 function hasUnsynced(){return unsynced.roster||unsynced.settings||Object.keys(unsynced.weeks).length>0||Object.keys(unsynced.resets).length>0}
@@ -714,14 +718,14 @@ function bump(sid,k,d){
 function renderWeeks(){
   const now=weekIndexToday();
   $("weeks").innerHTML=VERSES.map((v,i)=>`<button class="wk" style="--wv:${v.d}" aria-pressed="${i===current}" data-i="${i}">
-    <small>Week ${i+1}${weekDates(i)?" · "+weekDates(i):""}${i===now?'<em class="now">Now</em>':""}</small><span>${esc(v.ref)}</span></button>`).join("");
+    <small>Week ${v.lesson}${weekDates(i)?" · "+weekDates(i):""}${i===now?'<em class="now">Now</em>':""}</small><span>${esc(v.ref)}</span></button>`).join("");
   const on=$("weeks").querySelector('[aria-pressed="true"]');
   if(on) on.scrollIntoView({block:"nearest",inline:"nearest"});
 }
 function renderWeek(flashId,flashKey){
   const v=VERSES[current];
   document.documentElement.style.setProperty("--vd",v.d);
-  $("verse").innerHTML=`<div class="val">Week ${current+1} · ${esc(v.name)}</div><blockquote>“${esc(v.text)}”</blockquote><cite>${esc(v.ref)} (NIV)</cite>`;
+  $("verse").innerHTML=`<div class="val">Week ${v.lesson} · ${esc(v.name)}</div><blockquote>“${esc(v.text)}”</blockquote><cite>${esc(v.ref)} (NIV)</cite>`;
   let A=0,S=0,said=0;
   state.roster.forEach(st=>{const c=get(v.id,st.id);A+=c.a;S+=c.s;if(c.s>0)said++});
   const n=state.roster.length;
@@ -753,7 +757,7 @@ function renderTerm(){
       return c.s||c.a?`<td><span class="s">${c.s}</span> <span class="a">/ ${c.a}</span></td>`:`<td class="zero">·</td>`}).join("");
     return `<tr><td>${esc(st.name||"Unnamed")}</td>${tds}<td><span class="s">${ts}</span> <span class="a">/ ${ta}</span></td></tr>`}).join("");
   const tot=VERSES.map(v=>{let s=0,a=0;state.roster.forEach(st=>{const c=get(v.id,st.id);s+=c.s;a+=c.a});return `<td><span class="s">${s}</span> <span class="a">/ ${a}</span></td>`}).join("");
-  $("term").innerHTML=`<table><thead><tr><th>Student</th>${VERSES.map((v,i)=>`<th>Wk ${i+1}<br>${esc(v.short)}<span class="dot" style="background:${v.d}"></span></th>`).join("")}<th>Term</th></tr></thead>
+  $("term").innerHTML=`<table><thead><tr><th>Student</th>${VERSES.map((v,i)=>`<th>Wk ${v.lesson}<br>${esc(v.short)}<span class="dot" style="background:${v.d}"></span></th>`).join("")}<th>Term</th></tr></thead>
     <tbody>${rows}<tr class="tot"><td>Class total</td>${tot}<td></td></tr></tbody></table>`;
 }
 function renderSettings(){
@@ -853,7 +857,7 @@ function renderFlash(){
   $("flash-view").style.setProperty("--vd",v.d);
   $("f-count").textContent=F.deck.length>1?`· ${F.pos+1} of ${F.deck.length}`:"";
   const strip=picOn?`<div class="fpics" aria-hidden="true">${picWords(v).filter(w=>w.pic).map(w=>w.pic).join("")}</div>`:"";
-  $("fc-front").innerHTML=`<div class="fwk">Week ${i+1} · ${esc(v.name)}</div><div class="fref">${esc(v.ref)}</div>${strip}<div class="fhint">Say the verse, then tap the card to check${TOUCH?"<br>Swipe left or right to change cards":""}</div>`;
+  $("fc-front").innerHTML=`<div class="fwk">Week ${v.lesson} · ${esc(v.name)}</div><div class="fref">${esc(v.ref)}</div>${strip}<div class="fhint">Say the verse, then tap the card to check${TOUCH?"<br>Swipe left or right to change cards":""}</div>`;
   $("fc-back").innerHTML=`<div class="fverse${picOn?" withpics":""}">${picOn?picVerseHTML(v):"“"+esc(v.text)+"”"}</div><div class="fref2">${esc(v.ref)}</div>`;
   const ps=$("f-pics"); ps.setAttribute("aria-checked",picOn);
   const fc=$("fc"); fc.classList.toggle("flipped",F.flipped);
@@ -884,7 +888,7 @@ function wordHTML(P,i){
 function renderLearnWeeks(){
   const now=weekIndexToday(), m=mastered();
   $("lweeks").innerHTML=VERSES.slice(0,now+1).map((v,i)=>`<button class="wk" style="--wv:${v.d}" aria-pressed="${i===lv}" data-i="${i}">
-    <small>Week ${i+1}${i===now?'<em class="now">This week</em>':""}</small><span>${esc(v.ref)}${m[v.id]?'<b class="mastered" title="Learnt on this device">✓</b>':""}</span></button>`).join("");
+    <small>Week ${v.lesson}${i===now?'<em class="now">This week</em>':""}</small><span>${esc(v.ref)}${m[v.id]?'<b class="mastered" title="Learnt on this device">✓</b>':""}</span></button>`).join("");
   const on=$("lweeks").querySelector('[aria-pressed="true"]');
   if(on) $("lweeks").scrollLeft=Math.max(0,on.offsetLeft-$("lweeks").offsetLeft-16);
 }
@@ -893,7 +897,7 @@ function renderLearn(focus){
   renderLearnWeeks();
   const v=VERSES[lv],P=prep(v);
   $("lcard").style.setProperty("--vd",v.d);
-  $("l-week").textContent=`Week ${lv+1} · ${v.name}`;
+  $("l-week").textContent=`Week ${v.lesson} · ${v.name}`;
   $("l-ref").innerHTML=esc(v.ref)+'<span class="nkjv"> (NIV)</span>';
   const nParts=P.parts.length;
   $("l-parts").innerHTML=P.parts.map((_,p)=>`<button data-p="${p}" class="${p<L.part||L.finished?"done":""}" aria-pressed="${p===L.part&&!L.finished}"><i></i>${nParts>1?`Part ${p+1}`:"Whole verse"}</button>`).join("");
@@ -1162,7 +1166,7 @@ $("chest").addEventListener("click",e=>{if(e.target.id==="chest")closeChest()});
    iPads keep a saved copy of this page for a while. Each time the app opens or comes back to the
    front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
    Change BUILD whenever the page is updated. */
-const BUILD="2026-10-26-0725";
+const BUILD="2026-10-26-0925";
 async function checkForUpdate(){
   try{
     const r=await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"});
