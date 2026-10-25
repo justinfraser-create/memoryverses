@@ -1062,6 +1062,27 @@ function closeChest(){const d=$("chest"); if(d.close) d.close(); else d.removeAt
 $("chest-btn").addEventListener("click",e=>{e.stopPropagation();openChest()});
 $("chest-x").addEventListener("click",closeChest);
 $("chest").addEventListener("click",e=>{if(e.target.id==="chest")closeChest()});
+
+/* ---------- self-update ----------
+   iPads keep a saved copy of this page for a while. Each time the app opens or comes back to the
+   front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
+   Change BUILD whenever the page is updated. */
+const BUILD="2026-10-25-1405";
+async function checkForUpdate(){
+  try{
+    const r=await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"});
+    if(!r.ok) return;
+    const m=(await r.text()).match(/const BUILD="([^"]+)"/);
+    if(m&&m[1]!==BUILD){
+      const L=document.getElementById("chest"); if(L&&L.open) return;   // don't interrupt
+      location.replace(location.pathname+"?b="+encodeURIComponent(m[1]));
+    }
+  }catch(e){}
+}
+if(location.protocol.startsWith("http")){
+  setTimeout(checkForUpdate,1500);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkForUpdate()});
+}
 </script>
 </body>
 </html>
