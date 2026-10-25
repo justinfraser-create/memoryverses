@@ -570,6 +570,7 @@ async function pull(){
 }
 /* Take the Sheet's numbers, keeping anything this device hasn't uploaded yet. */
 function applyRemote(d){
+  const before=JSON.stringify([state.roster,state.settings,state.weeks]);
   if(Array.isArray(d.roster)&&d.roster.length){if(!unsynced.roster)state.roster=clone(d.roster)}
   else needSeed=true;
   if(d.settings&&d.settings.start&&!unsynced.settings&&d.settings.start!==state.settings.start){
@@ -582,7 +583,9 @@ function applyRemote(d){
     state.weeks[vid]=merged;
   });
   lsSave();
-  if(mode==="teacher"&&unlocked) render();
+  // redraw only when another device actually changed something, so the page never jumps or flickers
+  const changed=JSON.stringify([state.roster,state.settings,state.weeks])!==before;
+  if(changed&&mode==="teacher"&&unlocked){const y=window.scrollY;render();window.scrollTo(0,y)}
 }
 function schedule(key){
   lsSave(); showSync();
@@ -651,7 +654,9 @@ function renderWeeks(){
   $("weeks").innerHTML=VERSES.map((v,i)=>`<button class="wk" style="--wv:${v.d}" aria-pressed="${i===current}" data-i="${i}">
     <small>Week ${i+1}${weekDates(i)?" · "+weekDates(i):""}${i===now?'<em class="now">Now</em>':""}</small><span>${esc(v.ref)}</span></button>`).join("");
   const on=$("weeks").querySelector('[aria-pressed="true"]');
-  if(on) on.scrollIntoView({block:"nearest",inline:"nearest"});
+  // slide the chosen week into view sideways only; never scroll the page itself
+  if(on){const n=$("weeks");const l=on.offsetLeft-n.offsetLeft, r=l+on.offsetWidth;
+    if(l<n.scrollLeft) n.scrollLeft=l-8; else if(r>n.scrollLeft+n.clientWidth) n.scrollLeft=r-n.clientWidth+8}
 }
 function renderWeek(flashId,flashKey){
   const v=VERSES[current];
@@ -1092,7 +1097,7 @@ readHashCfg(); loadCfg(); lsLoad(); render(); startSync();
    iPads keep a saved copy of this page for a while. Each time the page opens or comes back to the
    front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
    Change BUILD whenever the page is updated. */
-const BUILD="2026-10-25-2200";
+const BUILD="2026-10-25-2205";
 async function checkForUpdate(){
   try{
     if(hasUnsynced()) return;                    // never reload with tallies still waiting to upload
