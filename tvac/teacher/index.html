@@ -399,6 +399,11 @@ html.touch .vtext .w{scroll-margin:90px 0 260px}
     <button class="btn" id="lock-btn">Lock</button>
   </div>
 
+  <div class="confirm" id="need-sync" hidden style="justify-content:space-between">
+    <span><b>Not connected to your Google Sheet yet.</b> Tallies are only on this device.</span>
+    <button class="btn primary" id="go-sync" type="button">Connect Google Sheet</button>
+  </div>
+
   <nav class="weeks" id="weeks" aria-label="Choose a week" hidden></nav>
 
   <section id="week-view" hidden style="display:flex;flex-direction:column;gap:14px">
@@ -528,6 +533,8 @@ function showSync(){
   else if(hasUnsynced()) t="Saving…";
   else t="✓ Saved to your Google Sheet · checks for changes from other devices every 15 seconds";
   $("sync").textContent=t; $("sync").classList.toggle("warn",warn);
+  // not connected: a banner under the tabs that goes straight to the connect panel
+  const nb=$("need-sync"); if(nb) nb.hidden=!!api||!(mode==="teacher"&&unlocked)||view==="set";
   const p=$("conn-pill");
   if(p){p.className="pill"+(api&&live&&!failed?" on":failed?" bad":"");
     p.textContent=!api?"Not connected":failed?"Problem":live?"Connected":"Connecting…"}
@@ -950,6 +957,7 @@ function render(){
   ["week","term","set"].forEach(k=>{$(k+"-view").hidden=!t||view!==k;$("v-"+k).setAttribute("aria-pressed",view===k)});
   if(t){renderWeeks(); if(view==="week")renderWeek(); if(view==="term")renderTerm(); if(view==="set")renderSettings();}
   if(mode==="learn") renderLearn();
+  showSync();
 }
 
 /* ---------- events ---------- */
@@ -1059,6 +1067,7 @@ $("export").addEventListener("click",()=>{
 });
 
 /* ---------- connect panel ---------- */
+$("go-sync").addEventListener("click",()=>{view="set";confirmReset=false;render();$("conn-panel").scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>$("c-url").focus({preventScroll:true}),400)});
 $("c-save").addEventListener("click",()=>{
   const url=$("c-url").value.trim(), key=$("c-key").value.trim();
   if(!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(url)){$("c-msg").textContent="Paste the Web app address from Apps Script. It starts with https://script.google.com/macros/s/ and ends in /exec.";return}
@@ -1083,7 +1092,7 @@ readHashCfg(); loadCfg(); lsLoad(); render(); startSync();
    iPads keep a saved copy of this page for a while. Each time the page opens or comes back to the
    front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
    Change BUILD whenever the page is updated. */
-const BUILD="2026-10-25-2110";
+const BUILD="2026-10-25-2200";
 async function checkForUpdate(){
   try{
     if(hasUnsynced()) return;                    // never reload with tallies still waiting to upload
