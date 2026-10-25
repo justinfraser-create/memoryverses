@@ -997,11 +997,16 @@ function revealTarget(how){
   L.pos++;
   if(L.pos>=L.hidden.length) L.complete=true;
 }
+/* Small keyboards: on phones and iPads a tap on the key just left or right of the right letter
+   counts as correct (same row of the on-screen keypad, plus 1–0 for reference numbers). */
+const NEAR={};
+["qwertyuiop","asdfghjkl","zxcvbnm","1234567890"].forEach(r=>[...r].forEach((c,k)=>{NEAR[c]=(r[k-1]||"")+(r[k+1]||"")}));
+function closeEnough(ch,want){return ch===want||(TOUCH&&!!want&&(NEAR[want]||"").includes(ch))}
 function typeLetter(ch){
   if(!L||L.complete||L.finished) return;
   const P=prep(VERSES[lv]); const i=L.hidden[L.pos]; const t=P.tokens[i];
   if(!/[a-z0-9]/i.test(ch)) return;
-  if(ch.toLowerCase()===t.key){revealTarget("got");renderLearn(true)}
+  if(closeEnough(ch.toLowerCase(),t.key)){revealTarget("got");renderLearn(true)}
   else{
     L.wrong[i]=(L.wrong[i]||0)+1;
     if(L.wrong[i]>=3){revealTarget("help");$("l-msg").dataset.keep=1;renderLearn(true);
@@ -1170,7 +1175,7 @@ $("chest").addEventListener("click",e=>{if(e.target.id==="chest")closeChest()});
    iPads keep a saved copy of this page for a while. Each time the app opens or comes back to the
    front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
    Change BUILD whenever the page is updated. */
-const BUILD="2026-10-26-0645";
+const BUILD="2026-10-26-0715";
 async function checkForUpdate(){
   try{
     const r=await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"});
