@@ -13,3 +13,9 @@ Live page: https://justinfraser-create.github.io/memoryverses/primary/
 Lessons 40–52 (NKJV), opening on flash cards with a Learn this verse option.
 
 Live page: https://justinfraser-create.github.io/memoryverses/junior/
+
+## TVAC Year 4 Values (Term 4)
+
+Value of the Week memory verses, Years 3–6 (NIV): Self-Control, Respect, Compassion, Integrity, Humility, Responsibility, Excellence, Discernment, Diligence. Each verse appears from the Sunday before its school week (week 1 = Monday 12 October 2026).
+
+Live page: https://justinfraser-create.github.io/memoryverses/tvac/

@@ -1,0 +1,26 @@
+{
+  "name": "TVAC Values Verses",
+  "short_name": "Verses TVAC",
+  "start_url": "/memoryverses/tvac/",
+  "scope": "/memoryverses/tvac/",
+  "display": "standalone",
+  "background_color": "#F5F7F9",
+  "theme_color": "#F5F7F9",
+  "icons": [
+    {
+      "src": "icon-192.png?v=1",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png?v=1",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "apple-touch-icon.png?v=1",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
