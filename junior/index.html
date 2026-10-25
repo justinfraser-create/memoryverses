@@ -240,6 +240,9 @@ html.touch .vtext .w{scroll-margin:90px 0 260px}
 }
 .lmini{display:none}
 .lacts{display:flex;gap:6px;flex:0 0 auto}
+/* Help sits where Restart is while students are filling gaps on a touch screen */
+.lhelp{flex:0 0 auto;border:1px solid color-mix(in srgb,var(--try) 45%,var(--line));background:var(--try-soft);color:var(--try);
+  border-radius:8px;padding:4px 14px;font-size:13px;font-weight:700;-webkit-tap-highlight-color:transparent}
 .fmini{border:1px solid #E9BC00;background:#FFD84D;color:#2B2200;border-radius:8px;padding:5px 12px;font-size:13px;font-weight:700;box-shadow:0 2px 0 #E9BC00}
 .fmini:hover{background:#FFCF26}
 .lhead2 .lrow1{flex:1 1 auto}
@@ -264,6 +267,9 @@ html.touch .vtext .w{scroll-margin:90px 0 260px}
   html.learning .lhead2{flex-direction:column;align-items:stretch;gap:8px}
   html.learning #l-week{display:none}
   html.learning .lref{font-size:17px}
+  html.learning .lrow1{flex-wrap:wrap;row-gap:6px}
+  html.learning .lref{white-space:nowrap}
+  html.learning .lacts{margin-left:auto}
   html.learning .lmini{display:inline-block;flex:0 0 auto;border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600;color:var(--muted)}
   html.learning #l-restart{display:none}
   html.learning .steps{flex-wrap:nowrap;gap:4px}
@@ -393,6 +399,7 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
             </button>
             <button class="fmini" id="l-flash-s" type="button">Flash cards</button>
             <button class="lmini" id="l-restart-s" type="button">↺ Restart</button>
+            <button class="lhelp" id="l-help-s" type="button" hidden>Help</button>
           </div>
         </div>
         <div class="steps" id="l-levels" role="group" aria-label="Step"></div>
@@ -915,6 +922,8 @@ function renderLearn(focus){
   // computers type into the box or straight onto the page.
   $("l-typerow").hidden=!typing||TOUCH;
   renderKeypad(typing&&TOUCH);
+  // touch screens: Help takes Restart's place while filling gaps; Restart comes back for the other steps
+  $("l-help-s").hidden=!(typing&&TOUCH); $("l-restart-s").hidden=typing&&TOUCH;
   $("lcard").classList.toggle("typing",typing);
   let instr;
   if(L.finished) instr="";
@@ -977,7 +986,7 @@ function renderKeypad(show){
   const digits=/[0-9]/.test((P.tokens[L.hidden[L.pos]]||{}).key||"");
   const sig=String(digits); if(sig===keypadSig) return; keypadSig=sig;
   const row=(s,extra="")=>`<div class="krow">${[...s].map(c=>`<button type="button" data-ch="${c}" aria-label="${c.toUpperCase()}">${c.toUpperCase()}</button>`).join("")}${extra}</div>`;
-  kp.innerHTML=(digits?row("1234567890"):"")+row(KEYROWS[0])+row(KEYROWS[1])+row(KEYROWS[2],`<button type="button" class="khelp" data-help="1">Help</button>`);
+  kp.innerHTML=(digits?row("1234567890"):"")+row(KEYROWS[0])+row(KEYROWS[1])+row(KEYROWS[2]);
 }
 function revealTarget(how){
   const i=L.hidden[L.pos];
@@ -996,7 +1005,7 @@ function typeLetter(ch){
     if(L.wrong[i]>=3){revealTarget("help");$("l-msg").dataset.keep=1;renderLearn(true);
       const m=$("l-msg");m.className="lmsg try";m.textContent=`That word was “${t.core}”.`}
     else{const el=$("l-text").querySelector(`.w[data-i="${i}"]`);if(el){el.classList.remove("shake");void el.offsetWidth;el.classList.add("shake")}
-      const m=$("l-msg");m.className="lmsg try";m.textContent=L.wrong[i]===1?"Not quite — try again.":(TOUCH?"Try once more, or tap Help.":"Try once more, or press “Show me a word”.");fitText()}
+      const m=$("l-msg");m.className="lmsg try";m.textContent=L.wrong[i]===1?"Not quite — try again.":(TOUCH?"Try once more, or tap Help at the top.":"Try once more, or press “Show me a word”.");fitText()}
   }
 }
 
@@ -1098,6 +1107,7 @@ $("l-levels").addEventListener("click",e=>{const b=e.target.closest("button[data
 $("l-next").addEventListener("click",()=>{if(L.finished){startStep(prep(VERSES[lv]).parts.length-1,LEVELS.length-1);renderLearn(true)}else nextStep()});
 $("l-restart").addEventListener("click",()=>{startStep(0,0);renderLearn(true)});
 $("l-restart-s").addEventListener("click",()=>{startStep(0,0);renderLearn(true)});
+$("l-help-s").addEventListener("click",()=>{if(!L||L.complete)return;revealTarget("help");renderLearn(true)});
 $("l-hint").addEventListener("click",()=>{if(!L||L.complete)return;revealTarget("help");renderLearn(true)});
 $("l-text").addEventListener("click",()=>{if(!$("l-typerow").hidden)$("typer").focus()});
 $("typer").addEventListener("input",e=>{const v=e.target.value;e.target.value="";if(v)typeLetter(v.slice(-1))});
@@ -1158,7 +1168,7 @@ $("chest").addEventListener("click",e=>{if(e.target.id==="chest")closeChest()});
    iPads keep a saved copy of this page for a while. Each time the app opens or comes back to the
    front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
    Change BUILD whenever the page is updated. */
-const BUILD="2026-10-26-0640";
+const BUILD="2026-10-26-0700";
 async function checkForUpdate(){
   try{
     const r=await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"});
