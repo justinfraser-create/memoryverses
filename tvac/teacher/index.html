@@ -54,6 +54,10 @@ h1{font-family:var(--f-display);font-weight:600;font-size:26px;margin:0;text-wra
 .wk[aria-pressed="true"] small{color:rgba(255,255,255,.8)}
 .wk .now{display:inline-block;margin-left:4px;font-size:10px;padding:0 5px;border-radius:4px;background:var(--try-soft);color:var(--try);text-transform:uppercase;letter-spacing:.05em;font-style:normal}
 .wk[aria-pressed="true"] .now{background:rgba(255,255,255,.22);color:#fff}
+/* value name above the reference on each week card */
+.wk .wval{font-size:14px;font-weight:700;color:var(--wv);white-space:nowrap;line-height:1.25}
+.wk[aria-pressed="true"] .wval{color:#fff}
+.wk .wval+span{font-weight:500;font-size:13px}
 
 .verse{background:var(--vd);color:#fff;border-radius:16px;padding:22px 24px;display:grid;grid-template-columns:1fr auto;gap:14px 24px;align-items:end}
 .verse .val{grid-column:1/-1;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:rgba(255,255,255,.75)}
@@ -657,7 +661,7 @@ function bump(sid,k,d){
 function renderWeeks(){
   const now=weekIndexToday();
   $("weeks").innerHTML=VERSES.map((v,i)=>`<button class="wk" style="--wv:${v.d}" aria-pressed="${i===current}" data-i="${i}">
-    <small>Week ${v.lesson}${weekDates(i)?" · "+weekDates(i):""}${i===now?'<em class="now">Now</em>':""}</small><span>${esc(v.ref)}</span></button>`).join("");
+    <small>Week ${v.lesson}${weekDates(i)?" · "+weekDates(i):""}${i===now?'<em class="now">Now</em>':""}</small><b class="wval">${esc(v.name)}</b><span>${esc(v.ref)}</span></button>`).join("");
   const on=$("weeks").querySelector('[aria-pressed="true"]');
   // slide the chosen week into view sideways only; never scroll the page itself
   if(on){const n=$("weeks");const l=on.offsetLeft-n.offsetLeft, r=l+on.offsetWidth;
@@ -828,7 +832,7 @@ function wordHTML(P,i){
 function renderLearnWeeks(){
   const now=weekIndexToday(), m=mastered();
   $("lweeks").innerHTML=VERSES.slice(0,now+1).map((v,i)=>`<button class="wk" style="--wv:${v.d}" aria-pressed="${i===lv}" data-i="${i}">
-    <small>Week ${v.lesson}${i===now?'<em class="now">This week</em>':""}</small><span>${esc(v.ref)}${m[v.id]?'<b class="mastered" title="Learnt on this device">✓</b>':""}</span></button>`).join("");
+    <small>Week ${v.lesson}${i===now?'<em class="now">This week</em>':""}</small><b class="wval">${esc(v.name)}</b><span>${esc(v.ref)}${m[v.id]?'<b class="mastered" title="Learnt on this device">✓</b>':""}</span></button>`).join("");
   const on=$("lweeks").querySelector('[aria-pressed="true"]');
   if(on) $("lweeks").scrollLeft=Math.max(0,on.offsetLeft-$("lweeks").offsetLeft-16);
 }
@@ -1102,7 +1106,7 @@ readHashCfg(); loadCfg(); lsLoad(); render(); startSync();
    iPads keep a saved copy of this page for a while. Each time the page opens or comes back to the
    front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
    Change BUILD whenever the page is updated. */
-const BUILD="2026-10-26-0925";
+const BUILD="2026-10-26-0935";
 async function checkForUpdate(){
   try{
     if(hasUnsynced()) return;                    // never reload with tallies still waiting to upload
