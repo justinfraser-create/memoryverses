@@ -1003,6 +1003,24 @@ $("export").addEventListener("click",async()=>{
 /* ---------- boot ---------- */
 lsLoad(); render();
 /* Student practice copy: no cloud connection, so students never need to sign in. */
+
+/* ---------- self-update ----------
+   iPads keep a saved copy of this page for a while. Each time the app opens or comes back to the
+   front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
+   Change BUILD whenever the page is updated. */
+const BUILD="2026-10-25-1410";
+async function checkForUpdate(){
+  try{
+    const r=await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"});
+    if(!r.ok) return;
+    const m=(await r.text()).match(/const BUILD="([^"]+)"/);
+    if(m&&m[1]!==BUILD) location.replace(location.pathname+"?b="+encodeURIComponent(m[1]));
+  }catch(e){}
+}
+if(location.protocol.startsWith("http")){
+  setTimeout(checkForUpdate,1500);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkForUpdate()});
+}
 </script>
 </body>
 </html>
