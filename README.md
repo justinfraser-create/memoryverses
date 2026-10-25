@@ -19,3 +19,9 @@ Live page: https://justinfraser-create.github.io/memoryverses/junior/
 Value of the Week memory verses, Years 3–6 (NIV): Self-Control, Respect, Compassion, Integrity, Humility, Responsibility, Excellence, Discernment, Diligence. Each verse appears from the Sunday before its school week (week 1 = Monday 12 October 2026).
 
 Live page: https://justinfraser-create.github.io/memoryverses/tvac/
+
+### TVAC teacher tracker (Google Sheet sync)
+
+Teacher page: https://justinfraser-create.github.io/memoryverses/tvac/teacher/
+
+Tallies are saved to a Google Sheet through the Apps Script in `tvac/teacher/Code.gs`. The web app address and sync key are entered on each device (or opened from a setup link) and kept in that device's storage only; they are never committed here.
