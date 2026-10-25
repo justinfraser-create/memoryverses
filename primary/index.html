@@ -333,6 +333,22 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
 @keyframes gemIn{from{transform:translateY(8px) scale(.9);opacity:0}}
 @media (prefers-reduced-motion:reduce){dialog.chest[open] .chest-top,dialog.chest[open] .gem.got{animation:none}}
 @media (max-width:640px){.chest-list{grid-template-columns:1fr 1fr}.chest-top{height:120px}html.learning .chestbtn{width:46px;height:40px}}
+
+/* ---------- picture help on flash cards ---------- */
+.fopts{display:flex;justify-content:center}
+.picswitch{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surface);border-radius:999px;
+  padding:7px 16px 7px 8px;font-weight:700;font-size:15px;color:var(--ink);-webkit-tap-highlight-color:transparent}
+.picswitch .sw{width:40px;height:24px;border-radius:999px;background:var(--line);position:relative;transition:background .2s;flex:0 0 auto}
+.picswitch .sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s}
+.picswitch[aria-checked="true"]{border-color:var(--vd)}
+.picswitch[aria-checked="true"] .sw{background:var(--vd)}
+.picswitch[aria-checked="true"] .sw::after{transform:translateX(16px)}
+@media (prefers-reduced-motion:reduce){.picswitch .sw,.picswitch .sw::after{transition:none}}
+.fpics{font-size:clamp(26px,6vw,36px);letter-spacing:.12em;line-height:1.3;max-width:20ch;text-wrap:balance}
+.fverse.withpics{line-height:1.25}
+.pw{display:inline-flex;flex-direction:column;align-items:center;vertical-align:bottom;margin-top:.15em}
+.pe{font-size:.95em;line-height:1.15;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+@media (max-width:640px){html.learning .fnav{padding-bottom:8px}html.learning .fopts{padding-bottom:28px}}
 </style>
 </head>
 <body>
@@ -403,6 +419,11 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
         <button class="btn" id="f-prev" type="button">← Previous</button>
         <button class="btn primary" id="f-flip" type="button">Flip</button>
         <button class="btn" id="f-next" type="button">Next →</button>
+      </div>
+      <div class="fopts">
+        <button class="picswitch" id="f-pics" type="button" role="switch" aria-checked="false">
+          <span class="sw" aria-hidden="true"></span><span>Picture help</span>
+        </button>
       </div>
     </div>
   </section>
@@ -495,6 +516,42 @@ const VERSES=[
  {id:"v13",lesson:13,d:"#3B4A5E",ref:"John 11:25",short:"John 11:25",text:"I am the resurrection and the life. He who believes in Me, though he may die, he shall live.",parts:["I am the resurrection and the life.", "He who believes in Me, though he may die,", "he shall live."]}
 ];
 /* Verse 1 is Sabbath 3 October 2026; each verse shows from the Sunday before, so Verse 5 shows from Sunday 25 October. */
+
+/* Picture help: a small picture above the key words of each verse (word, picture, and optionally
+   which occurrence to mark — otherwise every occurrence gets the picture). */
+const PICS={
+ v1:[["peace","🕊️"],["give","🎁"],["world","🌍"],["heart","❤️"],["troubled","😟"],["afraid","😨"]],
+ v2:[["casting","🙌"],["care","🎒"],["cares","💛"]],
+ v3:[["kindly","😊"],["affectionate","🤗"],["brotherly","👫"],["love","❤️"],["honor","🏅"],["preference","👉"]],
+ v4:[["look","👀"],["saved","🛟"],["earth","🌏"],["god","👑"],["other","☝️"]],
+ v5:[["lord","👑"],["gracious","🎁"],["compassion","🤗"],["slow","🐢"],["anger","😠"],["mercy","💛"]],
+ v6:[["come","🚶"],["life","🌱"],["more","➕"],["abundantly","🌊"]],
+ v7:[["jesus","✝️"],["heard","👂"],["answered","💬"],["afraid","😨"],["believe","🙏"]],
+ v8:[["know","🧠"],["truth","📖"],["free","🔓"]],
+ v9:[["mountains","🏔️"],["depart","💨",1],["hills","⛰️"],["removed","🚜"],["kindness","💛"]],
+ v10:[["lord","👑"],["opens","🔓"],["eyes","👀"],["blind","🦯"],["raises","⬆️"],["bowed","🙇"]],
+ v11:[["go","🚶"],["way","🛤️"],["believed","🙏"],["done","✅"]],
+ v12:[["turn","🔄"],["mourning","😢"],["joy","😄"],["comfort","🤗"],["rejoice","🎉"],["sorrow","😞"]],
+ v13:[["resurrection","🌅"],["life","🌱"],["believes","🙏"],["die","🥀"],["live","💓"]]
+};
+let picOn=false; try{picOn=localStorage.getItem("vt-pictures")==="1"}catch(e){}
+/* Returns the verse as words, each with its picture (or "") */
+function picWords(v){
+  const list=PICS[v.id]||[], seen={};
+  return v.text.split(/\s+/).filter(Boolean).map(raw=>{
+    const core=raw.replace(/^[^A-Za-z]+|[^A-Za-z]+$/g,"").toLowerCase();
+    seen[core]=(seen[core]||0)+1;
+    const hit=list.find(p=>p[0]===core&&(!p[2]||p[2]===seen[core]));
+    return {raw,pic:hit?hit[1]:""};
+  });
+}
+function picVerseHTML(v){
+  const ws=picWords(v); const last=ws.length-1;
+  return ws.map((w,i)=>{
+    const t=esc((i===0?"“":"")+w.raw+(i===last?"”":""));
+    return w.pic?`<span class="pw"><span class="pe" aria-hidden="true">${w.pic}</span>${t}</span>`:t;
+  }).join(" ");
+}
 const DEFAULT_START="2026-10-03";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -772,8 +829,10 @@ function renderFlash(){
   const i=F.deck[F.pos], v=VERSES[i];
   $("flash-view").style.setProperty("--vd",v.d);
   $("f-count").textContent=F.deck.length>1?`· ${F.pos+1} of ${F.deck.length}`:"";
-  $("fc-front").innerHTML=`<div class="fwk">Week ${i+1}</div><div class="fref">${esc(v.ref)}</div><div class="fhint">Say the verse, then tap the card to check${TOUCH?"<br>Swipe left or right to change cards":""}</div>`;
-  $("fc-back").innerHTML=`<div class="fverse">“${esc(v.text)}”</div><div class="fref2">${esc(v.ref)}</div>`;
+  const strip=picOn?`<div class="fpics" aria-hidden="true">${picWords(v).filter(w=>w.pic).map(w=>w.pic).join("")}</div>`:"";
+  $("fc-front").innerHTML=`<div class="fwk">Week ${i+1}</div><div class="fref">${esc(v.ref)}</div>${strip}<div class="fhint">Say the verse, then tap the card to check${TOUCH?"<br>Swipe left or right to change cards":""}</div>`;
+  $("fc-back").innerHTML=`<div class="fverse${picOn?" withpics":""}">${picOn?picVerseHTML(v):"“"+esc(v.text)+"”"}</div><div class="fref2">${esc(v.ref)}</div>`;
+  const ps=$("f-pics"); ps.setAttribute("aria-checked",picOn);
   const fc=$("fc"); fc.classList.toggle("flipped",F.flipped);
   fc.setAttribute("aria-label",F.flipped?`${v.ref}: ${v.text}. Tap to turn back.`:`${v.ref}. Tap to see the verse.`);
   $("f-flip").textContent=F.flipped?"Turn back":"Flip";
@@ -1050,6 +1109,9 @@ $("export").addEventListener("click",async()=>{
 lsLoad(); render();
 /* Student practice copy: no cloud connection, so students never need to sign in. */
 
+/* ---------- picture help switch (remembered on this device) ---------- */
+$("f-pics").addEventListener("click",e=>{e.stopPropagation();picOn=!picOn;try{localStorage.setItem("vt-pictures",picOn?"1":"0")}catch(err){}renderFlash()});
+
 /* ---------- treasure chest ---------- */
 function openChest(){
   const m=mastered(); let n=0;
@@ -1067,7 +1129,7 @@ $("chest").addEventListener("click",e=>{if(e.target.id==="chest")closeChest()});
    iPads keep a saved copy of this page for a while. Each time the app opens or comes back to the
    front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
    Change BUILD whenever the page is updated. */
-const BUILD="2026-10-25-1405";
+const BUILD="2026-10-26-0610";
 async function checkForUpdate(){
   try{
     const r=await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"});
