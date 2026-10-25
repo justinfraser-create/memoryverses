@@ -174,7 +174,7 @@ tr.tot td{font-weight:700;background:var(--soft)}
 .ltype input:focus{border-color:var(--vd);outline:none}
 .lmsg{min-height:1.4em;font-weight:600}
 .lmsg.ok{color:var(--ok)} .lmsg.try{color:var(--try)}
-.lfoot{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.lfoot{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .lfoot .btn.primary:empty{display:none}
 /* on-page keypad for phones and tablets: sticks to the bottom of the screen under the verse */
 .keypad{position:sticky;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);
@@ -242,7 +242,7 @@ html.touch .vtext .w{scroll-margin:90px 0 260px}
 }
 .lmini{display:none}
 .lacts{display:flex;gap:6px;flex:0 0 auto}
-/* Help sits where Restart is while students are filling gaps on a touch screen */
+/* Help sits at the top of the card while students are filling gaps on a touch screen */
 .lhelp{flex:0 0 auto;border:1px solid color-mix(in srgb,var(--try) 45%,var(--line));background:var(--try-soft);color:var(--try);
   border-radius:8px;padding:4px 14px;font-size:13px;font-weight:700;-webkit-tap-highlight-color:transparent}
 .fmini{border:1px solid #E9BC00;background:#FFD84D;color:#2B2200;border-radius:8px;padding:5px 12px;font-size:13px;font-weight:700;box-shadow:0 2px 0 #E9BC00}
@@ -273,7 +273,6 @@ html.touch .vtext .w{scroll-margin:90px 0 260px}
   html.learning .lref{white-space:nowrap}
   html.learning .lacts{margin-left:auto}
   html.learning .lmini{display:inline-block;flex:0 0 auto;border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600;color:var(--muted)}
-  html.learning #l-restart{display:none}
   html.learning .steps{flex-wrap:nowrap;gap:4px}
   html.learning .steps button{flex:1 1 auto;padding:4px 3px;font-size:11.5px;white-space:nowrap}
   html.learning .ladder{gap:4px}
@@ -400,7 +399,6 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
               <span class="sw" aria-hidden="true"></span><span class="lpl">Pictures</span><span class="lpi" aria-hidden="true">🖼️</span>
             </button>
             <button class="fmini" id="l-flash-s" type="button">Flash cards</button>
-            <button class="lmini" id="l-restart-s" type="button">↺ Restart</button>
             <button class="lhelp" id="l-help-s" type="button" hidden>Help</button>
           </div>
         </div>
@@ -417,7 +415,6 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
       <div class="lmsg" id="l-msg"></div>
       <div class="keypad" id="keypad" hidden aria-label="Letter keys"></div>
       <div class="lfoot" id="l-foot">
-        <button class="btn" id="l-restart">Start this verse again</button>
         <div class="lfr">
           <button class="btn flashbtn" id="l-flash" hidden>Flash cards</button>
           <button class="btn primary" id="l-next"></button>
@@ -924,8 +921,7 @@ function renderLearn(focus){
   // computers type into the box or straight onto the page.
   $("l-typerow").hidden=!typing||TOUCH;
   renderKeypad(typing&&TOUCH);
-  // touch screens: Help takes Restart's place while filling gaps; Restart comes back for the other steps
-  $("l-help-s").hidden=!(typing&&TOUCH); $("l-restart-s").hidden=typing&&TOUCH;
+  $("l-help-s").hidden=!(typing&&TOUCH);
   $("lcard").classList.toggle("typing",typing);
   let instr;
   if(L.finished) instr="";
@@ -1112,8 +1108,6 @@ document.addEventListener("keydown",e=>{
 $("l-parts").addEventListener("click",e=>{const b=e.target.closest("button[data-p]");if(!b)return;startStep(+b.dataset.p,0);renderLearn(true)});
 $("l-levels").addEventListener("click",e=>{const b=e.target.closest("button[data-k]");if(!b)return;startStep(L.part,+b.dataset.k);renderLearn(true)});
 $("l-next").addEventListener("click",()=>{if(L.finished){startStep(prep(VERSES[lv]).parts.length-1,LEVELS.length-1);renderLearn(true)}else nextStep()});
-$("l-restart").addEventListener("click",()=>{startStep(0,0);renderLearn(true)});
-$("l-restart-s").addEventListener("click",()=>{startStep(0,0);renderLearn(true)});
 $("l-help-s").addEventListener("click",()=>{if(!L||L.complete)return;revealTarget("help");renderLearn(true)});
 $("l-hint").addEventListener("click",()=>{if(!L||L.complete)return;revealTarget("help");renderLearn(true)});
 $("l-text").addEventListener("click",()=>{if(!$("l-typerow").hidden)$("typer").focus()});
@@ -1175,7 +1169,7 @@ $("chest").addEventListener("click",e=>{if(e.target.id==="chest")closeChest()});
    iPads keep a saved copy of this page for a while. Each time the app opens or comes back to the
    front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
    Change BUILD whenever the page is updated. */
-const BUILD="2026-10-26-0715";
+const BUILD="2026-10-26-0725";
 async function checkForUpdate(){
   try{
     const r=await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"});

@@ -174,14 +174,16 @@ tr.tot td{font-weight:700;background:var(--soft)}
 .ltype input:focus{border-color:var(--vd);outline:none}
 .lmsg{min-height:1.4em;font-weight:600}
 .lmsg.ok{color:var(--ok)} .lmsg.try{color:var(--try)}
-.lfoot{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.lfoot{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .lfoot .btn.primary:empty{display:none}
 /* on-page keypad for phones and tablets: sticks to the bottom of the screen under the verse */
 .keypad{position:sticky;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);
   margin:0 -22px;padding:10px 6px calc(10px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;
   box-shadow:0 -6px 16px rgba(0,0,0,.06)}
-.krow{display:flex;justify-content:center;gap:5px}
-.krow button{flex:1 1 0;max-width:48px;min-width:0;height:48px;border:0;border-radius:8px;background:var(--soft);color:var(--ink);
+/* Like a real keyboard: every key is one tenth of the row wide (less the gaps), so the
+   A–L row sits half a key in from each side and the Z–M row a key and a half in. */
+.krow{--kg:5px;display:flex;justify-content:center;gap:var(--kg);width:100%;max-width:620px;margin:0 auto}
+.krow button{flex:0 0 calc((100% - 9 * var(--kg)) / 10);min-width:0;height:48px;border:0;border-radius:8px;background:var(--soft);color:var(--ink);
   font-size:20px;font-weight:600;touch-action:manipulation;-webkit-user-select:none;user-select:none;padding:0;-webkit-tap-highlight-color:transparent}
 .krow button:active{background:var(--vd);color:#fff}
 .krow .khelp{flex:1.6 1 0;max-width:80px;font-size:14px;background:var(--try-soft);color:var(--try)}
@@ -240,6 +242,9 @@ html.touch .vtext .w{scroll-margin:90px 0 260px}
 }
 .lmini{display:none}
 .lacts{display:flex;gap:6px;flex:0 0 auto}
+/* Help sits at the top of the card while students are filling gaps on a touch screen */
+.lhelp{flex:0 0 auto;border:1px solid color-mix(in srgb,var(--try) 45%,var(--line));background:var(--try-soft);color:var(--try);
+  border-radius:8px;padding:4px 14px;font-size:13px;font-weight:700;-webkit-tap-highlight-color:transparent}
 .fmini{border:1px solid #E9BC00;background:#FFD84D;color:#2B2200;border-radius:8px;padding:5px 12px;font-size:13px;font-weight:700;box-shadow:0 2px 0 #E9BC00}
 .fmini:hover{background:#FFCF26}
 .lhead2 .lrow1{flex:1 1 auto}
@@ -264,8 +269,10 @@ html.touch .vtext .w{scroll-margin:90px 0 260px}
   html.learning .lhead2{flex-direction:column;align-items:stretch;gap:8px}
   html.learning #l-week{display:none}
   html.learning .lref{font-size:17px}
+  html.learning .lrow1{flex-wrap:wrap;row-gap:6px}
+  html.learning .lref{white-space:nowrap}
+  html.learning .lacts{margin-left:auto}
   html.learning .lmini{display:inline-block;flex:0 0 auto;border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600;color:var(--muted)}
-  html.learning #l-restart{display:none}
   html.learning .steps{flex-wrap:nowrap;gap:4px}
   html.learning .steps button{flex:1 1 auto;padding:4px 3px;font-size:11.5px;white-space:nowrap}
   html.learning .ladder{gap:4px}
@@ -287,7 +294,7 @@ html.touch .vtext .w{scroll-margin:90px 0 260px}
   html.learning .celebrate{padding:10px 12px}
   html.learning .keypad{position:static;margin:0 -12px;padding:8px 4px;gap:5px;box-shadow:none;flex:0 0 auto}
   html.learning .krow button{height:42px;font-size:18px}
-  html.learning .krow{gap:4px}
+  html.learning .krow{--kg:4px}
   html.learning .lfoot{padding-bottom:36px;flex:0 0 auto}   /* lifts Next clear of the screen edge and Safari toolbar */
   html.learning .lfoot .btn{padding:9px 16px}
 }
@@ -393,7 +400,7 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
               <span class="sw" aria-hidden="true"></span><span class="lpl">Pictures</span><span class="lpi" aria-hidden="true">🖼️</span>
             </button>
             <button class="fmini" id="l-flash-s" type="button">Flash cards</button>
-            <button class="lmini" id="l-restart-s" type="button">↺ Restart</button>
+            <button class="lhelp" id="l-help-s" type="button" hidden>Help</button>
           </div>
         </div>
         <div class="steps" id="l-levels" role="group" aria-label="Step"></div>
@@ -409,7 +416,6 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
       <div class="lmsg" id="l-msg"></div>
       <div class="keypad" id="keypad" hidden aria-label="Letter keys"></div>
       <div class="lfoot" id="l-foot">
-        <button class="btn" id="l-restart">Start this verse again</button>
         <div class="lfr">
           <button class="btn flashbtn" id="l-flash" hidden>Flash cards</button>
           <button class="btn primary" id="l-next"></button>
@@ -916,6 +922,7 @@ function renderLearn(focus){
   // computers type into the box or straight onto the page.
   $("l-typerow").hidden=!typing||TOUCH;
   renderKeypad(typing&&TOUCH);
+  $("l-help-s").hidden=!(typing&&TOUCH);
   $("lcard").classList.toggle("typing",typing);
   let instr;
   if(L.finished) instr="";
@@ -978,7 +985,7 @@ function renderKeypad(show){
   const digits=/[0-9]/.test((P.tokens[L.hidden[L.pos]]||{}).key||"");
   const sig=String(digits); if(sig===keypadSig) return; keypadSig=sig;
   const row=(s,extra="")=>`<div class="krow">${[...s].map(c=>`<button type="button" data-ch="${c}" aria-label="${c.toUpperCase()}">${c.toUpperCase()}</button>`).join("")}${extra}</div>`;
-  kp.innerHTML=(digits?row("1234567890"):"")+row(KEYROWS[0])+row(KEYROWS[1])+row(KEYROWS[2],`<button type="button" class="khelp" data-help="1">Help</button>`);
+  kp.innerHTML=(digits?row("1234567890"):"")+row(KEYROWS[0])+row(KEYROWS[1])+row(KEYROWS[2]);
 }
 function revealTarget(how){
   const i=L.hidden[L.pos];
@@ -1002,7 +1009,7 @@ function typeLetter(ch){
     if(L.wrong[i]>=3){revealTarget("help");$("l-msg").dataset.keep=1;renderLearn(true);
       const m=$("l-msg");m.className="lmsg try";m.textContent=`That word was “${t.core}”.`}
     else{const el=$("l-text").querySelector(`.w[data-i="${i}"]`);if(el){el.classList.remove("shake");void el.offsetWidth;el.classList.add("shake")}
-      const m=$("l-msg");m.className="lmsg try";m.textContent=L.wrong[i]===1?"Not quite — try again.":(TOUCH?"Try once more, or tap Help.":"Try once more, or press “Show me a word”.");fitText()}
+      const m=$("l-msg");m.className="lmsg try";m.textContent=L.wrong[i]===1?"Not quite — try again.":(TOUCH?"Try once more, or tap Help at the top.":"Try once more, or press “Show me a word”.");fitText()}
   }
 }
 
@@ -1102,8 +1109,7 @@ document.addEventListener("keydown",e=>{
 $("l-parts").addEventListener("click",e=>{const b=e.target.closest("button[data-p]");if(!b)return;startStep(+b.dataset.p,0);renderLearn(true)});
 $("l-levels").addEventListener("click",e=>{const b=e.target.closest("button[data-k]");if(!b)return;startStep(L.part,+b.dataset.k);renderLearn(true)});
 $("l-next").addEventListener("click",()=>{if(L.finished){startStep(prep(VERSES[lv]).parts.length-1,LEVELS.length-1);renderLearn(true)}else nextStep()});
-$("l-restart").addEventListener("click",()=>{startStep(0,0);renderLearn(true)});
-$("l-restart-s").addEventListener("click",()=>{startStep(0,0);renderLearn(true)});
+$("l-help-s").addEventListener("click",()=>{if(!L||L.complete)return;revealTarget("help");renderLearn(true)});
 $("l-hint").addEventListener("click",()=>{if(!L||L.complete)return;revealTarget("help");renderLearn(true)});
 $("l-text").addEventListener("click",()=>{if(!$("l-typerow").hidden)$("typer").focus()});
 $("typer").addEventListener("input",e=>{const v=e.target.value;e.target.value="";if(v)typeLetter(v.slice(-1))});
@@ -1164,7 +1170,7 @@ $("chest").addEventListener("click",e=>{if(e.target.id==="chest")closeChest()});
    iPads keep a saved copy of this page for a while. Each time the app opens or comes back to the
    front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
    Change BUILD whenever the page is updated. */
-const BUILD="2026-10-26-0715";
+const BUILD="2026-10-26-0725";
 async function checkForUpdate(){
   try{
     const r=await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"});
