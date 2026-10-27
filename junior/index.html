@@ -159,6 +159,18 @@ tr.tot td{font-weight:700;background:var(--soft)}
 .vtext .w{white-space:nowrap;border-radius:6px;transition:background .2s}
 .vtext .w.new{background:color-mix(in srgb,var(--vd) 12%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--vd) 12%,transparent)}
 .vtext .w.got{color:var(--ok)}
+.vtext .w.said{color:var(--ok)}
+/* Say it (speech) */
+.lspeak{display:flex;align-items:center;gap:10px;min-height:40px}
+.micbtn{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--vd);background:var(--surface);color:var(--vd);
+  border-radius:999px;padding:7px 16px 7px 12px;font-weight:700;font-size:15px;flex:0 0 auto;-webkit-tap-highlight-color:transparent}
+.micbtn .mdot{width:12px;height:12px;border-radius:50%;background:currentColor}
+.micbtn.on{background:#C0392B;border-color:#C0392B;color:#fff}
+.micbtn.on .mdot{background:#fff;animation:micpulse 1s ease-in-out infinite}
+@keyframes micpulse{50%{transform:scale(.55);opacity:.6}}
+@media (prefers-reduced-motion:reduce){.micbtn.on .mdot{animation:none}}
+.heard{font-size:14px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:640px){html.learning .lspeak{min-height:36px;flex:0 0 auto}html.learning .micbtn{padding:5px 14px 5px 10px;font-size:14px}html.learning .heard{font-size:13px}}
 .vtext .w.help{color:var(--try)}
 /* hidden letters keep their real width: the letter is invisible and one dash is drawn under it */
 .vtext .l{--u:color-mix(in srgb,var(--muted) 60%,transparent);color:transparent;background:linear-gradient(var(--u),var(--u)) no-repeat center bottom/calc(100% - 3px) 3px}
@@ -411,6 +423,10 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
         <label for="typer" class="sr">Type the first letter of the next missing word</label>
         <input id="typer" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" placeholder="Type the first letter…">
         <button class="btn" id="l-hint">Show me a word</button>
+      </div>
+      <div class="lspeak" id="l-speak" hidden>
+        <button class="micbtn" id="mic" type="button" aria-pressed="false"><span class="mdot" aria-hidden="true"></span><span id="mic-l">Say it</span></button>
+        <span class="heard" id="heard" aria-live="polite"></span>
       </div>
       <div class="lmsg" id="l-msg"></div>
       <div class="keypad" id="keypad" hidden aria-label="Letter keys"></div>
@@ -820,7 +836,8 @@ function startStep(part,level){
   if(last)for(let i=P.refStart;i<P.tokens.length;i++)range.push(i);   // learn the reference with the final part
   const n=Math.ceil(LEVELS[level].f*range.length);
   const hidden=range.slice().sort((a,b)=>P.tokens[a].rank-P.tokens[b].rank).slice(0,n).sort((a,b)=>a-b);
-  L={part,level,range,hidden,pos:0,state:{},wrong:{},firstTry:0,complete:level===0,finished:false};
+  L={part,level,range,hidden,pos:0,state:{},wrong:{},firstTry:0,complete:level===0,finished:false,sp:0,said:{}};
+  numBuf="";   // speech keeps listening across steps
 }
 function nextStep(){
   const P=prep(VERSES[lv]);
@@ -882,7 +899,7 @@ function wordHTML(P,i){
   const st=L.state[i];
   const target=!L.complete&&L.hidden[L.pos]===i;
   const isNew=L.level===0&&L.part>0&&!t.ref&&t.part===L.part;
-  let cls="w"+(target?" target":"")+(st==="got"?" got":"")+(st==="help"?" help":"")+(isNew?" new":"");
+  let cls="w"+(target?" target":"")+(st==="got"?" got":"")+(st==="help"?" help":"")+(isNew?" new":"")+(!isHidden&&L.said&&L.said[i]?" said":"");
   const core=isHidden&&!st?[...t.core].map(c=>`<span class="l">${esc(c)}</span>`).join(""):esc(t.core);
   const html=`<span class="${cls}" data-i="${i}">${esc(t.pre)}${core}${esc(t.post)}</span>`;
   const pic=picOn&&!t.ref?picTokens(VERSES[lv],P)[i]:"";
@@ -923,6 +940,7 @@ function renderLearn(focus){
   renderKeypad(typing&&TOUCH);
   $("l-help-s").hidden=!(typing&&TOUCH);
   $("lcard").classList.toggle("typing",typing);
+  renderSpeak();
   let instr;
   if(L.finished) instr="";
   else if(L.level===0) instr=L.part===0
@@ -986,6 +1004,116 @@ function renderKeypad(show){
   const row=(s,extra="")=>`<div class="krow">${[...s].map(c=>`<button type="button" data-ch="${c}" aria-label="${c.toUpperCase()}">${c.toUpperCase()}</button>`).join("")}${extra}</div>`;
   kp.innerHTML=(digits?row("1234567890"):"")+row(KEYROWS[0])+row(KEYROWS[1])+row(KEYROWS[2]);
 }
+
+/* ================= SAY IT: speak the verse =================
+   This week's verse only (for now). Students tap the microphone and say the verse. Each word they
+   say correctly, in order, turns green; hidden words are revealed as they are said. Uses the
+   browser's built-in speech recognition (Safari on iPad/iPhone, Chrome on computers), which sends
+   the audio to Apple or Google to turn it into words. */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null, listening=false, consumed=0, numBuf="";
+const FILLER=new Set(["a","an","and","the","of","to","in","is","i","my","his","he","we","you","be","for","with","that","it","as","at","by","on","or","so","but"]);
+const SOUNDS=[["their","there","theyre"],["to","too","two"],["hear","here"],["heal","heel","he'll","hell"],["him","hymn"],["know","no"],["whose","whos"],["pray","prey"],["seek","sikh"],["one","won"],["through","threw","thru"],["would","wood"],["sight","site","cite"],["way","weigh"],["least","leased"],["lords","lord"],["humble","umble"],["mercies","mercys"],["new","knew"],["great","grate"],["prophets","profits"],["your","youre"],["the","a"],["god","gods"]];
+const SAME={}; SOUNDS.forEach(g=>g.forEach(w=>{SAME[w]=g}));
+const NUMW={zero:0,oh:0,one:1,first:1,two:2,second:2,three:3,third:3,four:4,fourth:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+const normW=w=>w.toLowerCase().replace(/[’']/g,"").replace(/[^a-z0-9]/g,"");
+function wordsMatch(heard,want){
+  if(!heard||!want) return false;
+  if(heard===want) return true;
+  if(SAME[want]&&SAME[want].includes(heard)) return true;
+  if(want.length>4&&heard.replace(/s$/,"")===want.replace(/s$/,"")) return true;   // plural/possessive slips
+  return false;
+}
+function digitsOf(h){            // "12", "twelve", "2nd", "second" → digits
+  if(/^\d+(st|nd|rd|th)?$/.test(h)) return h.replace(/\D/g,"");
+  if(h in NUMW) return String(NUMW[h]);
+  return null;
+}
+function speakOn(){return !!SR&&lv===weekIndexToday()&&!F&&L&&!L.finished}
+function markSaid(i){
+  if(L.hidden.includes(i)){
+    if(!L.state[i]){L.state[i]="got"; if(!L.wrong[i]) L.firstTry++}
+    while(L.pos<L.hidden.length&&L.state[L.hidden[L.pos]]) L.pos++;
+    if(L.pos>=L.hidden.length) L.complete=true;
+  } else L.said[i]=1;
+}
+/* Take one heard word and move along the verse if it is the next word (or the one after a small
+   word the recogniser often drops, such as "and" or "the"). Anything else is ignored, so students
+   just say it again. */
+function hearWord(raw){
+  if(!L||L.sp>=L.range.length) return false;
+  if(L.level>0&&L.complete) return false;
+  const P=prep(VERSES[lv]); const h=normW(raw); if(!h) return false;
+  const want=k=>normW(P.tokens[L.range[k]].core);
+  const isNum=k=>/^\d/.test(P.tokens[L.range[k]].core);
+  const k=L.sp;
+  if(isNum(k)){                                       // reference numbers can arrive in pieces
+    const d=digitsOf(h); if(d===null){numBuf="";return false}
+    const target=want(k); numBuf+=d;
+    if(numBuf===target){markSaid(L.range[k]);L.sp++;numBuf="";return true}
+    if(target.startsWith(numBuf)) return false;
+    numBuf=d; if(numBuf===target){markSaid(L.range[k]);L.sp++;numBuf="";return true}
+    if(!target.startsWith(numBuf)) numBuf="";
+    return false;
+  }
+  if(wordsMatch(h,want(k))){markSaid(L.range[k]);L.sp++;return true}
+  for(let skip=1;skip<=2&&k+skip<L.range.length;skip++){
+    let ok=true; for(let j=k;j<k+skip;j++) if(!FILLER.has(want(j))) ok=false;
+    if(ok&&!isNum(k+skip)&&wordsMatch(h,want(k+skip))){
+      for(let j=k;j<=k+skip;j++) markSaid(L.range[j]);
+      L.sp=k+skip+1; return true;
+    }
+  }
+  return false;
+}
+function heardWords(list){
+  let moved=false; list.forEach(w=>{if(hearWord(w))moved=true});
+  if(list.length) $("heard").textContent="I heard: “"+list.slice(-6).join(" ")+"”";
+  if(moved){
+    renderLearn(false);
+    // the microphone stays on between steps; it switches off when the verse is finished or Stop is tapped
+    if(L.level===0&&L.sp>=L.range.length){const m=$("l-msg");m.className="lmsg ok";m.textContent="You said every word! Press Next.";}
+  }
+}
+function startListening(){
+  if(!SR||listening) return;
+  rec=new SR(); rec.lang="en-AU"; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=1;
+  consumed=0; numBuf="";
+  rec.onresult=e=>{
+    const words=[];
+    for(let r=0;r<e.results.length;r++){
+      const res=e.results[r], ws=res[0].transcript.trim().split(/\s+/).filter(Boolean);
+      // the last word of an unfinished phrase may still change, so wait for it
+      const stable=res.isFinal||r<e.results.length-1?ws:ws.slice(0,-1);
+      if(res.isFinal||r<e.results.length-1) words.push(...ws); else {words.push(...stable); break}
+    }
+    if(words.length>consumed){const fresh=words.slice(consumed);consumed=words.length;heardWords(fresh)}
+  };
+  rec.onerror=e=>{
+    if(e.error==="not-allowed"||e.error==="service-not-allowed"){
+      stopListening(); $("heard").textContent="The microphone is turned off for this page. Allow it in Settings, then try again.";
+    }
+  };
+  rec.onend=()=>{ if(listening){ consumed=0; try{rec.start()}catch(err){} } };   // keep listening after pauses
+  try{rec.start(); listening=true; $("heard").textContent="Listening… start saying the verse.";}catch(err){listening=false}
+  updateMic();
+}
+function stopListening(){
+  listening=false; if(rec){try{rec.onend=null;rec.stop()}catch(e){} rec=null}
+  updateMic();
+}
+function updateMic(){
+  const b=$("mic"); if(!b) return;
+  b.setAttribute("aria-pressed",listening); b.classList.toggle("on",listening);
+  $("mic-l").textContent=listening?"Stop":"Say it";
+}
+function renderSpeak(){
+  const on=speakOn();
+  $("l-speak").hidden=!on;
+  if(!on&&listening) stopListening();
+  if(on&&!listening&&!$("heard").textContent) $("heard").textContent=L.level===0?"Tap Say it and read the verse aloud.":"Tap Say it and say the verse. Words turn green as you get them right.";
+}
+
 function revealTarget(how){
   const i=L.hidden[L.pos];
   L.state[i]=how;
@@ -1108,6 +1236,8 @@ document.addEventListener("keydown",e=>{
 $("l-parts").addEventListener("click",e=>{const b=e.target.closest("button[data-p]");if(!b)return;startStep(+b.dataset.p,0);renderLearn(true)});
 $("l-levels").addEventListener("click",e=>{const b=e.target.closest("button[data-k]");if(!b)return;startStep(L.part,+b.dataset.k);renderLearn(true)});
 $("l-next").addEventListener("click",()=>{if(L.finished){startStep(prep(VERSES[lv]).parts.length-1,LEVELS.length-1);renderLearn(true)}else nextStep()});
+$("mic").addEventListener("click",()=>{if(listening)stopListening();else{$("heard").textContent="";startListening()}});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState!=="visible")stopListening()});
 $("l-help-s").addEventListener("click",()=>{if(!L||L.complete)return;revealTarget("help");renderLearn(true)});
 $("l-hint").addEventListener("click",()=>{if(!L||L.complete)return;revealTarget("help");renderLearn(true)});
 $("l-text").addEventListener("click",()=>{if(!$("l-typerow").hidden)$("typer").focus()});
@@ -1169,7 +1299,7 @@ $("chest").addEventListener("click",e=>{if(e.target.id==="chest")closeChest()});
    iPads keep a saved copy of this page for a while. Each time the app opens or comes back to the
    front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
    Change BUILD whenever the page is updated. */
-const BUILD="2026-10-26-0725";
+const BUILD="2026-10-28-0630";
 async function checkForUpdate(){
   try{
     const r=await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"});
