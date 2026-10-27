@@ -1029,7 +1029,7 @@ function digitsOf(h){            // "12", "twelve", "2nd", "second" → digits
   if(h in NUMW) return String(NUMW[h]);
   return null;
 }
-function speakOn(){return !!SR&&lv===weekIndexToday()&&!F&&L&&!L.finished}
+function speakOn(){return lv===weekIndexToday()&&!F&&L&&!L.finished}
 function markSaid(i){
   if(L.hidden.includes(i)){
     if(!L.state[i]){L.state[i]="got"; if(!L.wrong[i]) L.firstTry++}
@@ -1037,67 +1037,89 @@ function markSaid(i){
     if(L.pos>=L.hidden.length) L.complete=true;
   } else L.said[i]=1;
 }
-/* Take one heard word and move along the verse if it is the next word (or the one after a small
-   word the recogniser often drops, such as "and" or "the"). Anything else is ignored, so students
-   just say it again. */
-function hearWord(raw){
-  if(!L||L.sp>=L.range.length) return false;
-  if(L.level>0&&L.complete) return false;
-  const P=prep(VERSES[lv]); const h=normW(raw); if(!h) return false;
-  const want=k=>normW(P.tokens[L.range[k]].core);
-  const isNum=k=>/^\d/.test(P.tokens[L.range[k]].core);
-  const k=L.sp;
-  if(isNum(k)){                                       // reference numbers can arrive in pieces
-    const d=digitsOf(h); if(d===null){numBuf="";return false}
-    const target=want(k); numBuf+=d;
-    if(numBuf===target){markSaid(L.range[k]);L.sp++;numBuf="";return true}
-    if(target.startsWith(numBuf)) return false;
-    numBuf=d; if(numBuf===target){markSaid(L.range[k]);L.sp++;numBuf="";return true}
-    if(!target.startsWith(numBuf)) numBuf="";
-    return false;
-  }
-  if(wordsMatch(h,want(k))){markSaid(L.range[k]);L.sp++;return true}
-  for(let skip=1;skip<=2&&k+skip<L.range.length;skip++){
-    let ok=true; for(let j=k;j<k+skip;j++) if(!FILLER.has(want(j))) ok=false;
-    if(ok&&!isNum(k+skip)&&wordsMatch(h,want(k+skip))){
-      for(let j=k;j<=k+skip;j++) markSaid(L.range[j]);
-      L.sp=k+skip+1; return true;
+/* Line up what was heard with the verse, starting from where this listening session began.
+   It is worked out afresh from the whole transcript every time, because iPhones report speech
+   differently from computers (they repeat earlier words and revise them). Words are matched in
+   order; small words the recogniser often drops (and, the, my…) may be skipped; anything else that
+   doesn't fit is ignored, so students just say it again. */
+function align(words,startSp){
+  const P=prep(VERSES[lv]); const out=[]; let k=startSp, buf="";
+  const want=x=>normW(P.tokens[L.range[x]].core);
+  const isNum=x=>/^\d/.test(P.tokens[L.range[x]].core);
+  for(const raw of words){
+    if(k>=L.range.length) break;
+    const h=normW(raw); if(!h) continue;
+    if(isNum(k)){                                   // reference numbers can arrive in pieces: "7" "14", "seven fourteen", "714"
+      const d=digitsOf(h); if(d===null){buf="";continue}
+      const target=want(k);
+      buf=target.startsWith(buf+d)?buf+d:(target.startsWith(d)?d:"");
+      if(buf===target){out.push(k);k++;buf=""}
+      continue;
+    }
+    if(wordsMatch(h,want(k))){out.push(k);k++;continue}
+    for(let skip=1;skip<=2&&k+skip<L.range.length;skip++){
+      let ok=true; for(let j=k;j<k+skip;j++) if(!FILLER.has(want(j))) ok=false;
+      if(ok&&!isNum(k+skip)&&wordsMatch(h,want(k+skip))){for(let j=k;j<=k+skip;j++)out.push(j);k=k+skip+1;break}
     }
   }
-  return false;
+  return out;
 }
-function heardWords(list){
-  let moved=false; list.forEach(w=>{if(hearWord(w))moved=true});
-  if(list.length) $("heard").textContent="I heard: “"+list.slice(-6).join(" ")+"”";
-  if(moved){
-    renderLearn(false);
-    // the microphone stays on between steps; it switches off when the verse is finished or Stop is tapped
-    if(L.level===0&&L.sp>=L.range.length){const m=$("l-msg");m.className="lmsg ok";m.textContent="You said every word! Press Next.";}
-  }
+let sess={start:0,skip:0,L:null}, restarting=false;          // where this listening session began, and how many heard words to ignore
+let lastWords=[];
+function newSession(){sess={start:L?L.sp:0,skip:0,L};lastWords=[]}
+function onHeard(words,shown){
+  if(!L||L.finished) return;
+  if(sess.L!==L){sess={start:L.sp,skip:lastWords.length,L}}   // a new step started while listening: ignore what came before
+  lastWords=words;
+  const fresh=words.slice(sess.skip);
+  if(fresh.length) $("heard").textContent="I heard: “"+(shown||fresh.join(" ")).split(/\s+/).slice(-7).join(" ")+"”";
+  if(L.level>0&&L.complete) return;
+  const m=align(fresh,sess.start);
+  if(!m.length||m[m.length-1]+1<=L.sp) return;        // nothing new
+  m.forEach(k=>markSaid(L.range[k]));
+  L.sp=m[m.length-1]+1;
+  renderLearn(false);
+  if(L.level===0&&L.sp>=L.range.length){const g=$("l-msg");g.className="lmsg ok";g.textContent="You said every word! Press Next."}
 }
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 function startListening(){
-  if(!SR||listening) return;
-  rec=new SR(); rec.lang="en-AU"; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=1;
-  consumed=0; numBuf="";
+  if(listening) return;
+  if(!SR){ $("heard").textContent="Speaking isn't available in this browser. On an iPhone or iPad, open the page in Safari."; return; }
+  try{ rec=new SR(); }catch(err){ $("heard").textContent="Speaking couldn't start on this device."; return; }
+  rec.lang="en-AU"; rec.interimResults=true; rec.maxAlternatives=1;
+  rec.continuous=!IOS;                     // iPhones/iPads are more reliable one phrase at a time
+  newSession();
   rec.onresult=e=>{
     const words=[];
-    for(let r=0;r<e.results.length;r++){
-      const res=e.results[r], ws=res[0].transcript.trim().split(/\s+/).filter(Boolean);
-      // the last word of an unfinished phrase may still change, so wait for it
-      const stable=res.isFinal||r<e.results.length-1?ws:ws.slice(0,-1);
-      if(res.isFinal||r<e.results.length-1) words.push(...ws); else {words.push(...stable); break}
-    }
-    if(words.length>consumed){const fresh=words.slice(consumed);consumed=words.length;heardWords(fresh)}
+    for(let r=0;r<e.results.length;r++) words.push(...e.results[r][0].transcript.trim().split(/\s+/).filter(Boolean));
+    const last=e.results.length?e.results[e.results.length-1][0].transcript.trim():"";
+    onHeard(words,last);
   };
   rec.onerror=e=>{
-    if(e.error==="not-allowed"||e.error==="service-not-allowed"){
-      stopListening(); $("heard").textContent="The microphone is turned off for this page. Allow it in Settings, then try again.";
-    }
+    const msg={
+      "not-allowed":"The microphone is blocked for this page. On iPhone: Settings › Safari › Microphone › Allow, then try again.",
+      "service-not-allowed":"Speech isn't switched on. On iPhone: Settings › Siri (or Keyboard › Enable Dictation) must be on, then try again.",
+      "audio-capture":"No microphone was found.",
+      "network":"Speaking needs the internet. Check the Wi-Fi and try again.",
+      "language-not-supported":"This device can't recognise Australian English speech."
+    }[e.error];
+    if(!msg) return;
+    if(restarting&&e.error==="not-allowed"){ stopListening(); $("heard").textContent="Tap Say it to keep going."; return; }
+    stopListening(); $("heard").textContent=msg;
   };
-  rec.onend=()=>{ if(listening){ consumed=0; try{rec.start()}catch(err){} } };   // keep listening after pauses
-  try{rec.start(); listening=true; $("heard").textContent="Listening… start saying the verse.";}catch(err){listening=false}
+  rec.onend=()=>{
+    if(!listening) return;
+    // computers: keep listening after a pause. iPhones/iPads only allow the microphone straight after
+    // a tap, so try once and otherwise ask for another tap.
+    restarting=true; setTimeout(()=>{restarting=false},1500);
+    try{ rec.start(); newSessionKeep(); }
+    catch(err){ listening=false; updateMic(); $("heard").textContent="Tap Say it to keep going."; }
+  };
+  try{ rec.start(); listening=true; $("heard").textContent="Listening… start saying the verse."; }
+  catch(err){ listening=false; $("heard").textContent="Speaking couldn't start ("+(err&&err.name||"error")+"). Try again."; }
   updateMic();
 }
+function newSessionKeep(){ sess={start:L?L.sp:0,skip:0,L}; lastWords=[]; }
 function stopListening(){
   listening=false; if(rec){try{rec.onend=null;rec.stop()}catch(e){} rec=null}
   updateMic();
@@ -1111,9 +1133,8 @@ function renderSpeak(){
   const on=speakOn();
   $("l-speak").hidden=!on;
   if(!on&&listening) stopListening();
-  if(on&&!listening&&!$("heard").textContent) $("heard").textContent=L.level===0?"Tap Say it and read the verse aloud.":"Tap Say it and say the verse. Words turn green as you get them right.";
+  if(on&&!listening&&!$("heard").textContent) $("heard").textContent=!SR?"Speaking isn't available in this browser.":(L.level===0?"Tap Say it and read the verse aloud.":"Tap Say it and say the verse. Words turn green as you get them right.");
 }
-
 function revealTarget(how){
   const i=L.hidden[L.pos];
   L.state[i]=how;
@@ -1299,7 +1320,7 @@ $("chest").addEventListener("click",e=>{if(e.target.id==="chest")closeChest()});
    iPads keep a saved copy of this page for a while. Each time the app opens or comes back to the
    front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
    Change BUILD whenever the page is updated. */
-const BUILD="2026-10-28-0630";
+const BUILD="2026-10-28-0700";
 async function checkForUpdate(){
   try{
     const r=await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"});
