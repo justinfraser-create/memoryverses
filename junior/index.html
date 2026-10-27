@@ -169,6 +169,18 @@ tr.tot td{font-weight:700;background:var(--soft)}
 .micbtn.on .mdot{background:#fff;animation:micpulse 1s ease-in-out infinite}
 @keyframes micpulse{50%{transform:scale(.55);opacity:.6}}
 @media (prefers-reduced-motion:reduce){.micbtn.on .mdot{animation:none}}
+.fspeak{justify-content:center}
+.fsay{font-family:var(--f-display);font-size:22px;line-height:1.5;max-width:36ch;overflow-wrap:break-word}
+.fsay .fw{white-space:nowrap}
+.front.saying{gap:8px;padding:16px 14px;justify-content:flex-start}
+.front.saying .fwk{display:none}
+.front.saying .fref{font-size:clamp(20px,4.5vw,30px)}
+.front.saying .fhint{margin-top:auto}
+.front.saying .fhint:empty{display:none}
+.flash.saying .fopts{display:none}          /* more room for the verse while speaking */
+.fsay .fw.ok{color:#FFE27A}
+.fsay .l{color:transparent;background:linear-gradient(rgba(255,255,255,.5),rgba(255,255,255,.5)) no-repeat center bottom/calc(100% - 3px) 2.5px}
+.fsay .fsref{display:block;font-family:var(--f-ui);font-size:.7em;font-weight:700;margin-top:.3em}
 .heard{font-size:14px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){html.learning .lspeak{min-height:36px;flex:0 0 auto}html.learning .micbtn{padding:5px 14px 5px 10px;font-size:14px}html.learning .heard{font-size:13px}}
 .vtext .w.help{color:var(--try)}
@@ -425,7 +437,7 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
         <button class="btn" id="l-hint">Show me a word</button>
       </div>
       <div class="lspeak" id="l-speak" hidden>
-        <button class="micbtn" id="mic" type="button" aria-pressed="false"><span class="mdot" aria-hidden="true"></span><span id="mic-l">Say it</span></button>
+        <button class="micbtn" id="mic" type="button" aria-pressed="false"><span class="mdot" aria-hidden="true"></span><span class="ml">Say it</span></button>
         <span class="heard" id="heard" aria-live="polite"></span>
       </div>
       <div class="lmsg" id="l-msg"></div>
@@ -453,6 +465,10 @@ dialog.chest[open] .gem.got{animation:gemIn .4s ease-out backwards;animation-del
           <div class="face back" id="fc-back"></div>
         </div>
       </button>
+      <div class="lspeak fspeak" id="f-speak" hidden>
+        <button class="micbtn" id="f-mic" type="button" aria-pressed="false"><span class="mdot" aria-hidden="true"></span><span class="ml">Say it</span></button>
+        <span class="heard" id="f-heard" aria-live="polite"></span>
+      </div>
       <div class="fnav">
         <button class="btn" id="f-prev" type="button">← Previous</button>
         <button class="btn primary" id="f-flip" type="button">Flip</button>
@@ -877,17 +893,30 @@ function renderFlash(){
   $("flash-view").style.setProperty("--vd",v.d);
   $("f-count").textContent=F.deck.length>1?`· ${F.pos+1} of ${F.deck.length}`:"";
   const strip=picOn?`<div class="fpics" aria-hidden="true">${picWords(v).filter(w=>w.pic).map(w=>w.pic).join("")}</div>`:"";
-  $("fc-front").innerHTML=`<div class="fwk">Week ${i+1} · Lesson ${v.lesson}</div><div class="fref">${esc(v.ref)}</div>${strip}<div class="fhint">Say the verse, then tap the card to check${TOUCH?"<br>Swipe left or right to change cards":""}</div>`;
+  // Say it on this week's card: the verse appears as dashes that fill in as each word is said
+  const T=F.say&&F.say.v===i&&F.say.active?F.say:null;
+  let sayHTML="";
+  if(T){
+    const P=prep(v), ks=P.tokens.map((t,k)=>k), w=k=>{const t=P.tokens[k];
+      return T.said[k]?`<span class="fw ok">${esc(t.pre+t.core+t.post)}</span>`
+        :`<span class="fw">${esc(t.pre)}${[...t.core].map(c=>`<span class="l">${esc(c)}</span>`).join("")}${esc(t.post)}</span>`};
+    sayHTML=`<div class="fsay">${ks.filter(k=>!P.tokens[k].ref).map(w).join(" ")}<span class="fsref">${ks.filter(k=>P.tokens[k].ref).map(w).join(" ")}</span></div>`;
+  }
+  $("fc-front").classList.toggle("saying",!!T); $("flash-view").classList.toggle("saying",!!T);
+  $("fc-front").innerHTML=`<div class="fwk">Week ${i+1} · Lesson ${v.lesson}</div><div class="fref">${esc(v.ref)}</div>${T?sayHTML:strip}<div class="fhint">${T?(T.sp>=T.range.length?"You said it all! Tap the card to check.":""):"Say the verse, then tap the card to check"+(TOUCH?"<br>Swipe left or right to change cards":"")}</div>`;
   $("fc-back").innerHTML=`<div class="fverse${picOn?" withpics":""}">${picOn?picVerseHTML(v):"“"+esc(v.text)+"”"}</div><div class="fref2">${esc(v.ref)}</div>`;
   const ps=$("f-pics"); ps.setAttribute("aria-checked",picOn);
   const fc=$("fc"); fc.classList.toggle("flipped",F.flipped);
   fc.setAttribute("aria-label",F.flipped?`${v.ref}: ${v.text}. Tap to turn back.`:`${v.ref}. Tap to see the verse.`);
   $("f-flip").textContent=F.flipped?"Turn back":"Flip";
   $("f-prev").disabled=$("f-next").disabled=F.deck.length<2;
+  renderFlashSpeak();
   fitFlash();
 }
 /* shrink the verse on the back until it fits the card */
 function fitFlash(){
+  const front=$("fc-front"), fs=front.querySelector(".fsay");
+  if(fs){let z=PHONE.matches?22:26; fs.style.fontSize=z+"px"; while(z>11&&front.scrollHeight>front.clientHeight+1){z--;fs.style.fontSize=z+"px"}}
   const back=$("fc-back"), el=back.querySelector(".fverse"); if(!el)return;
   let size=PHONE.matches?26:30; el.style.fontSize=size+"px";
   while(size>14&&back.scrollHeight>back.clientHeight+1){size--;el.style.fontSize=size+"px"}
@@ -1030,7 +1059,17 @@ function digitsOf(h){            // "12", "twelve", "2nd", "second" → digits
   return null;
 }
 function speakOn(){return lv===weekIndexToday()&&!F&&L&&!L.finished}
-function markSaid(i){
+/* What speech is being matched against: the learning steps (L) or, on the flash cards, this
+   week's card (F.say — the whole verse and reference, shown as dashes that fill in). */
+function curT(){
+  if(F){ const v=F.deck[F.pos]; if(v!==weekIndexToday()) return null;
+    if(!F.say||F.say.v!==v){const P=prep(VERSES[v]);F.say={flash:true,v,range:P.tokens.map((t,k)=>k),sp:0,said:{},active:false}}
+    return F.say }
+  return L;
+}
+const H=()=>F?$("f-heard"):$("heard");                 // where "I heard…" messages go
+function markSaid(i,T){
+  if(T&&T.flash){T.said[i]=1;return}
   if(L.hidden.includes(i)){
     if(!L.state[i]){L.state[i]="got"; if(!L.wrong[i]) L.firstTry++}
     while(L.pos<L.hidden.length&&L.state[L.hidden[L.pos]]) L.pos++;
@@ -1042,12 +1081,13 @@ function markSaid(i){
    differently from computers (they repeat earlier words and revise them). Words are matched in
    order; small words the recogniser often drops (and, the, my…) may be skipped; anything else that
    doesn't fit is ignored, so students just say it again. */
-function align(words,startSp){
-  const P=prep(VERSES[lv]); const out=[]; let k=startSp, buf="";
-  const want=x=>normW(P.tokens[L.range[x]].core);
-  const isNum=x=>/^\d/.test(P.tokens[L.range[x]].core);
+function align(words,startSp,T){
+  T=T||L; const R=T.range;
+  const P=prep(VERSES[T.flash?T.v:lv]); const out=[]; let k=startSp, buf="";
+  const want=x=>normW(P.tokens[R[x]].core);
+  const isNum=x=>/^\d/.test(P.tokens[R[x]].core);
   for(const raw of words){
-    if(k>=L.range.length) break;
+    if(k>=R.length) break;
     const h=normW(raw); if(!h) continue;
     if(isNum(k)){                                   // reference numbers can arrive in pieces: "7" "14", "seven fourteen", "714"
       const d=digitsOf(h); if(d===null){buf="";continue}
@@ -1057,7 +1097,7 @@ function align(words,startSp){
       continue;
     }
     if(wordsMatch(h,want(k))){out.push(k);k++;continue}
-    for(let skip=1;skip<=2&&k+skip<L.range.length;skip++){
+    for(let skip=1;skip<=2&&k+skip<R.length;skip++){
       let ok=true; for(let j=k;j<k+skip;j++) if(!FILLER.has(want(j))) ok=false;
       if(ok&&!isNum(k+skip)&&wordsMatch(h,want(k+skip))){for(let j=k;j<=k+skip;j++)out.push(j);k=k+skip+1;break}
     }
@@ -1066,26 +1106,32 @@ function align(words,startSp){
 }
 let sess={start:0,skip:0,L:null}, restarting=false;          // where this listening session began, and how many heard words to ignore
 let lastWords=[];
-function newSession(){sess={start:L?L.sp:0,skip:0,L};lastWords=[]}
+function newSession(){const T=curT();sess={start:T?T.sp:0,skip:0,L:T};lastWords=[]}
 function onHeard(words,shown){
-  if(!L||L.finished) return;
-  if(sess.L!==L){sess={start:L.sp,skip:lastWords.length,L}}   // a new step started while listening: ignore what came before
+  const T=curT();
+  if(!T||(!T.flash&&L.finished)) return;
+  if(sess.L!==T){sess={start:T.sp,skip:lastWords.length,L:T}}   // a new step or card started while listening: ignore what came before
   lastWords=words;
   const fresh=words.slice(sess.skip);
-  if(fresh.length) $("heard").textContent="I heard: “"+(shown||fresh.join(" ")).split(/\s+/).slice(-7).join(" ")+"”";
-  if(L.level>0&&L.complete) return;
-  const m=align(fresh,sess.start);
-  if(!m.length||m[m.length-1]+1<=L.sp) return;        // nothing new
-  m.forEach(k=>markSaid(L.range[k]));
-  L.sp=m[m.length-1]+1;
+  if(fresh.length) H().textContent="I heard: “"+(shown||fresh.join(" ")).split(/\s+/).slice(-7).join(" ")+"”";
+  if(!T.flash&&L.level>0&&L.complete) return;
+  const m=align(fresh,sess.start,T);
+  if(!m.length||m[m.length-1]+1<=T.sp) return;        // nothing new
+  m.forEach(k=>markSaid(T.range[k],T));
+  T.sp=m[m.length-1]+1;
+  if(T.flash){
+    renderFlash();
+    if(T.sp>=T.range.length){stopListening();H().textContent="You said the whole verse! Flip the card to check."}
+    return;
+  }
   renderLearn(false);
   if(L.level===0&&L.sp>=L.range.length){const g=$("l-msg");g.className="lmsg ok";g.textContent="You said every word! Press Next."}
 }
 const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 function startListening(){
   if(listening) return;
-  if(!SR){ $("heard").textContent="Speaking isn't available in this browser. On an iPhone or iPad, open the page in Safari."; return; }
-  try{ rec=new SR(); }catch(err){ $("heard").textContent="Speaking couldn't start on this device."; return; }
+  if(!SR){ H().textContent="Speaking isn't available in this browser. On an iPhone or iPad, open the page in Safari."; return; }
+  try{ rec=new SR(); }catch(err){ H().textContent="Speaking couldn't start on this device."; return; }
   rec.lang="en-AU"; rec.interimResults=true; rec.maxAlternatives=1;
   rec.continuous=!IOS;                     // iPhones/iPads are more reliable one phrase at a time
   newSession();
@@ -1104,8 +1150,8 @@ function startListening(){
       "language-not-supported":"This device can't recognise Australian English speech."
     }[e.error];
     if(!msg) return;
-    if(restarting&&e.error==="not-allowed"){ stopListening(); $("heard").textContent="Tap Say it to keep going."; return; }
-    stopListening(); $("heard").textContent=msg;
+    if(restarting&&e.error==="not-allowed"){ stopListening(); H().textContent="Tap Say it to keep going."; return; }
+    stopListening(); H().textContent=msg;
   };
   rec.onend=()=>{
     if(!listening) return;
@@ -1113,27 +1159,33 @@ function startListening(){
     // a tap, so try once and otherwise ask for another tap.
     restarting=true; setTimeout(()=>{restarting=false},1500);
     try{ rec.start(); newSessionKeep(); }
-    catch(err){ listening=false; updateMic(); $("heard").textContent="Tap Say it to keep going."; }
+    catch(err){ listening=false; updateMic(); H().textContent="Tap Say it to keep going."; }
   };
-  try{ rec.start(); listening=true; $("heard").textContent="Listening… start saying the verse."; }
-  catch(err){ listening=false; $("heard").textContent="Speaking couldn't start ("+(err&&err.name||"error")+"). Try again."; }
+  try{ rec.start(); listening=true; H().textContent="Listening… start saying the verse."; }
+  catch(err){ listening=false; H().textContent="Speaking couldn't start ("+(err&&err.name||"error")+"). Try again."; }
   updateMic();
 }
-function newSessionKeep(){ sess={start:L?L.sp:0,skip:0,L}; lastWords=[]; }
+function newSessionKeep(){ const T=curT(); sess={start:T?T.sp:0,skip:0,L:T}; lastWords=[]; }
 function stopListening(){
   listening=false; if(rec){try{rec.onend=null;rec.stop()}catch(e){} rec=null}
   updateMic();
 }
 function updateMic(){
-  const b=$("mic"); if(!b) return;
-  b.setAttribute("aria-pressed",listening); b.classList.toggle("on",listening);
-  $("mic-l").textContent=listening?"Stop":"Say it";
+  ["mic","f-mic"].forEach(id=>{const b=$(id); if(!b) return;
+    b.setAttribute("aria-pressed",listening); b.classList.toggle("on",listening);
+    b.querySelector(".ml").textContent=listening?"Stop":"Say it";});
 }
 function renderSpeak(){
   const on=speakOn();
   $("l-speak").hidden=!on;
-  if(!on&&listening) stopListening();
+  if(!on&&listening&&!(F&&curT())) stopListening();
   if(on&&!listening&&!$("heard").textContent) $("heard").textContent=!SR?"Speaking isn't available in this browser.":(L.level===0?"Tap Say it and read the verse aloud.":"Tap Say it and say the verse. Words turn green as you get them right.");
+}
+function renderFlashSpeak(){
+  const T=curT(), on=!!T;
+  $("f-speak").hidden=!on;
+  if(!on&&listening) stopListening();
+  if(on&&!listening&&!$("f-heard").textContent) $("f-heard").textContent=SR?"Tap Say it and say the verse without looking.":"Speaking isn't available in this browser.";
 }
 function revealTarget(how){
   const i=L.hidden[L.pos];
@@ -1258,6 +1310,13 @@ $("l-parts").addEventListener("click",e=>{const b=e.target.closest("button[data-
 $("l-levels").addEventListener("click",e=>{const b=e.target.closest("button[data-k]");if(!b)return;startStep(L.part,+b.dataset.k);renderLearn(true)});
 $("l-next").addEventListener("click",()=>{if(L.finished){startStep(prep(VERSES[lv]).parts.length-1,LEVELS.length-1);renderLearn(true)}else nextStep()});
 $("mic").addEventListener("click",()=>{if(listening)stopListening();else{$("heard").textContent="";startListening()}});
+$("f-mic").addEventListener("click",()=>{
+  if(listening){stopListening();return}
+  const T=curT(); if(!T) return;
+  if(T.sp>=T.range.length){T.sp=0;T.said={}}           // said it all before: start again
+  T.active=true; F.flipped=false; renderFlash();
+  $("f-heard").textContent=""; startListening();
+});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState!=="visible")stopListening()});
 $("l-help-s").addEventListener("click",()=>{if(!L||L.complete)return;revealTarget("help");renderLearn(true)});
 $("l-hint").addEventListener("click",()=>{if(!L||L.complete)return;revealTarget("help");renderLearn(true)});
@@ -1320,7 +1379,7 @@ $("chest").addEventListener("click",e=>{if(e.target.id==="chest")closeChest()});
    iPads keep a saved copy of this page for a while. Each time the app opens or comes back to the
    front, check the live page for a newer BUILD and, if there is one, reload a fresh copy.
    Change BUILD whenever the page is updated. */
-const BUILD="2026-10-28-0700";
+const BUILD="2026-10-28-0640";
 async function checkForUpdate(){
   try{
     const r=await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"});
